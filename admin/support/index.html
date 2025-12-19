@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      main {
+        padding: 32px;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .metrics {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .metric-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        display: grid;
+        gap: 10px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
+      }
+
+      .metric-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4b5563;
+      }
+
+      .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .metric-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .table-wrapper::-webkit-scrollbar {
+        height: 10px;
+      }
+
+      .table-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.6);
+        border-radius: 999px;
+      }
+
+      table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        text-align: left;
+        font-size: 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      tbody tr:hover {
+        background: rgba(99, 102, 241, 0.04);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .badge.success {
+        background: rgba(34, 197, 94, 0.18);
+        color: #047857;
+      }
+
+      .badge.warning {
+        background: rgba(249, 115, 22, 0.18);
+        color: #c2410c;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+
+        header button {
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="../">Kullanıcılar</a>
+          <a href="../support" class="active">Destek</a>
+        </nav>
+      </aside>
+      <div class="content">
+        <header>
+          <h2>Destek Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Refresh</button>
+            <button id="sign-out">Sign out</button>
+          </div>
+        </header>
+        <main>
+          <div id="status" class="status-banner" aria-live="polite">
+            Destek metrikleri yükleniyor...
+          </div>
+          <section class="metrics">
+            <article class="metric-card">
+              <span class="metric-title">Unresolved Tickets</span>
+              <span id="metric-unresolved" class="metric-value">–</span>
+              <span class="metric-subtitle">Tickets awaiting resolution</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-title">Resolved Tickets</span>
+              <span id="metric-resolved" class="metric-value">–</span>
+              <span class="metric-subtitle">Tickets marked as resolved</span>
+            </article>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Destek Talepleri</h2>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Subject</th>
+                    <th>Description</th>
+                    <th>Email</th>
+                    <th>User ID</th>
+                    <th>Created</th>
+                    <th>Resolved</th>
+                    <th>Answered</th>
+                  </tr>
+                </thead>
+                <tbody id="tickets-table-body">
+                  <tr>
+                    <td colspan="8" class="muted">Destek talepleri yükleniyor…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const metrics = {
+        unresolved: document.getElementById("metric-unresolved"),
+        resolved: document.getElementById("metric-resolved"),
+      };
+      const ticketsTableBody = document.getElementById("tickets-table-body");
+      const signOutBtn = document.getElementById("sign-out");
+      const refreshBtn = document.getElementById("refresh");
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "login.html";
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        refreshDashboard();
+      });
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) {
+          return value;
+        }
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}`;
+      }
+
+      function renderBadge(isTrue) {
+        return isTrue
+          ? '<span class="badge success">Yes</span>'
+          : '<span class="badge warning">No</span>';
+      }
+
+      async function ensureSession() {
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
+        if (error || !session) {
+          window.location.href = "login.html";
+          return null;
+        }
+        return session;
+      }
+
+      async function loadMetrics() {
+        const unresolvedPromise = supabaseClient
+          .from("support")
+          .select("ticket_id", { count: "exact", head: true })
+          .eq("resolved", false);
+
+        const resolvedPromise = supabaseClient
+          .from("support")
+          .select("ticket_id", { count: "exact", head: true })
+          .eq("resolved", true);
+
+        const [{ count: unresolvedCount, error: unresolvedError }, { count: resolvedCount, error: resolvedError }] =
+          await Promise.all([unresolvedPromise, resolvedPromise]);
+
+        if (unresolvedError) throw unresolvedError;
+        if (resolvedError) throw resolvedError;
+
+        metrics.unresolved.textContent = unresolvedCount ?? 0;
+        metrics.resolved.textContent = resolvedCount ?? 0;
+      }
+
+      async function loadTickets() {
+        const { data, error } = await supabaseClient
+          .from("support")
+          .select(
+            `
+            ticket_id,
+            subject,
+            description,
+            email,
+            user_id,
+            created_at,
+            resolved,
+            answered
+          `
+          )
+          .order("created_at", { ascending: false })
+          .limit(300);
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          ticketsTableBody.innerHTML =
+            '<tr><td colspan="8" class="muted">Destek talebi bulunamadı.</td></tr>';
+          return;
+        }
+
+        ticketsTableBody.innerHTML = data
+          .map(
+            (ticket) => `
+              <tr>
+                <td>${ticket.ticket_id}</td>
+                <td>${ticket.subject}</td>
+                <td>${ticket.description}</td>
+                <td>${ticket.email}</td>
+                <td>${ticket.user_id}</td>
+                <td>${formatDate(ticket.created_at)}</td>
+                <td>${renderBadge(ticket.resolved)}</td>
+                <td>${renderBadge(ticket.answered)}</td>
+              </tr>
+            `
+          )
+          .join("");
+      }
+
+      async function refreshDashboard({ skipSessionCheck = false } = {}) {
+        try {
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = "Güncelleniyor...";
+          statusBanner.textContent = "Destek verileri eşleniyor...";
+
+          if (!skipSessionCheck) {
+            const session = await ensureSession();
+            if (!session) return;
+          }
+
+          await Promise.all([loadMetrics(), loadTickets()]);
+          statusBanner.textContent = "Destek paneli güncellendi.";
+        } catch (error) {
+          console.error("Destek verileri yüklenemedi:", error);
+          statusBanner.textContent =
+            error.message || "Destek verileri yüklenemedi.";
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "Güncelle";
+        }
+      }
+
+      async function initialise() {
+        const session = await ensureSession();
+        if (!session) return;
+
+        await refreshDashboard({ skipSessionCheck: true });
+      }
+
+      initialise();
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Center</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      main {
+        padding: 32px;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .metrics {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .metric-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        display: grid;
+        gap: 10px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
+      }
+
+      .metric-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4b5563;
+      }
+
+      .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .metric-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 10;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pagination-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #374151;
+        transition: all 0.2s ease;
+      }
+
+      .pagination-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+      }
+
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+        min-width: 80px;
+        text-align: center;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        text-align: center;
+        font-size: 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+        min-width: 140px;
+      }
+
+      th {
+        position: relative;
+        user-select: none;
+        cursor: pointer;
+        white-space: nowrap;
+        padding: 25px 40px;
+        text-align: center;
+      }
+
+      th.sortable {
+        padding-right: 32px;
+      }
+
+      th.sortable:hover {
+        background: #f3f4f6;
+      }
+
+      th.sortable::after {
+        content: "⇅";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.85rem;
+        color: #9ca3af;
+      }
+
+      th.sort-asc::after {
+        content: "↑";
+        color: #4f46e5;
+      }
+
+      th.sort-desc::after {
+        content: "↓";
+        color: #4f46e5;
+      }
+
+      th.sort-asc,
+      th.sort-desc {
+        background: rgba(79, 70, 229, 0.06);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+      }
+
+      th.sort-asc:hover,
+      th.sort-desc:hover {
+        background: rgba(79, 70, 229, 0.08);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.3);
+      }
+
+      .sort-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+        z-index: 100;
+        min-width: 160px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0.2s;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .sort-dropdown.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0s;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .sort-dropdown button {
+        display: block;
+        width: 100%;
+        padding: 12px 18px;
+        text-align: left;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1f2937;
+        transition: all 0.15s ease;
+        position: relative;
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      .sort-dropdown.show button {
+        animation: slideInButton 0.2s ease forwards;
+      }
+
+      .sort-dropdown.show button:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      .sort-dropdown.show button:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes slideInButton {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .sort-dropdown button:hover {
+        background: #f8fafc;
+        color: #4f46e5;
+      }
+
+      .sort-dropdown button:active {
+        background: #f1f5f9;
+      }
+
+      .sort-dropdown button:first-child {
+        padding-top: 14px;
+      }
+
+      .sort-dropdown button:last-child {
+        padding-bottom: 14px;
+      }
+
+      .sort-dropdown button:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        right: 18px;
+        height: 1px;
+        background: #f1f5f9;
+      }
+
+      tbody tr:not(.no-animate) {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRow 0.4s ease forwards;
+      }
+
+      tbody tr:not(.no-animate):nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(3) {
+        animation-delay: 0.15s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(4) {
+        animation-delay: 0.2s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(5) {
+        animation-delay: 0.25s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(n+6) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes slideInRow {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      tbody tr:hover {
+        background: rgba(99, 102, 241, 0.04);
+      }
+
+      tbody tr.premium-row {
+        background: rgba(79, 70, 229, 0.04);
+        border-left: 2px solid rgba(79, 70, 229, 0.3);
+      }
+
+      tbody tr.premium-row:hover {
+        background: rgba(79, 70, 229, 0.06);
+        border-left-color: rgba(79, 70, 229, 0.4);
+      }
+
+      .muted {
+        color: #6b7280;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+
+        header button {
+          width: auto;
+        }
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .table-wrapper::-webkit-scrollbar {
+        height: 10px;
+      }
+
+      .table-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.6);
+        border-radius: 999px;
+      }
+
+      table {
+        min-width: 2000px;
+      }
+      .upper-header {
+        text-align: center;
+        border-style: solid;
+        border-color: #e5e7eb;
+        border-radius: 10px;
+        padding: 10px;
+        margin: 10px;
+        background-color: #f9fafb;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #1f2937;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="admin.html" class="active">Kullanıcılar</a>
+          <a href="support">Destek</a>
+        </nav>
+      </aside>
+      <div class="content">
+        <header>
+          <h2>Kullanıcı Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Güncelle</button>
+            <button id="sign-out">Çıkış Yap</button>
+          </div>
+        </header>
+        <main>
+          <div id="status" class="status-banner" aria-live="polite">
+            Metrikler yükleniyor...
+          </div>
+          <section class="metrics">
+            <article class="metric-card">
+              <span class="metric-title">Kayıt Sayısı (24s)</span>
+              <span id="metric-signups-day" class="metric-value">–</span>
+              <span class="metric-subtitle">Son 24 saatte kaydolan kullanıcılar</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-title">Kayıt Sayısı (7g)</span>
+              <span id="metric-signups-week" class="metric-value">–</span>
+              <span class="metric-subtitle">Son 7 günde kaydolan kullanıcılar</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-title">Aktif (24s)</span>
+              <span id="metric-active-day" class="metric-value">–</span>
+              <span class="metric-subtitle">Son 24 saatte aktif kullanıcılar</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-title">Aktif (7g)</span>
+              <span id="metric-active-week" class="metric-value">–</span>
+              <span class="metric-subtitle">Son 7 günde aktif kullanıcılar</span>
+            </article>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Kullanıcılar</h2>
+              <div class="pagination-controls">
+                <button id="prev-page" class="pagination-btn" disabled>
+                  <span>←</span>
+                </button>
+                <span id="pagination-info" class="pagination-info">0-0 / 0</span>
+                <button id="next-page" class="pagination-btn">
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header" colspan="2">Kalan Mesajlar</th>
+                    <th class="upper-header" colspan="2">Toplam Mesajlar</th>
+                    <th class="upper-header" colspan="2">Maliyet</th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                    <th class="upper-header"></th>
+                  </tr>
+                  <tr>
+                    <th class="sortable" data-column="id">ID
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="account_tier">Hesap Türü
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="created_on">Oluşturulma Tarihi
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="last_used">En Son Kullanıldığı Tarih
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="daily_classic_message_count">Kalan Klasik Mesajlar
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="daily_reasoning_message_count">Kalan Akıl Yürütme Mesajları
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="total_classic_message_count">Toplam Klasik Mesaj Sayısı
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="total_reasoning_message_count">Toplam Akıl Yürütme Mesaj Sayısı
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="classic_cost">Klasik Model Maliyeti (TRY)
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="reasoning_cost">Akıl Yürütme Modeli Maliyeti (TRY)
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="info">Notlar
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="hadis_title">Hadis
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="story_title">Story
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="fun_fact_title">Fun Fact
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body">
+                  <tr class="no-animate">
+                    <td colspan="21" class="muted">Loading user data…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+      let DOLAR = 0;
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const metrics = {
+        signupsDay: document.getElementById("metric-signups-day"),
+        signupsWeek: document.getElementById("metric-signups-week"),
+        activeDay: document.getElementById("metric-active-day"),
+        activeWeek: document.getElementById("metric-active-week"),
+      };
+
+      const usersTableBody = document.getElementById("users-table-body");
+      const signOutBtn = document.getElementById("sign-out");
+      const refreshBtn = document.getElementById("refresh");
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "login.html";
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        refreshDashboard();
+      });
+
+      // Sorting state
+      let currentSort = { column: null, direction: null };
+
+      // Pagination state
+      let currentPage = 1;
+      const itemsPerPage = 20;
+      let allUsersData = [];
+      const prevPageBtn = document.getElementById("prev-page");
+      const nextPageBtn = document.getElementById("next-page");
+      const paginationInfo = document.getElementById("pagination-info");
+
+      function updatePaginationControls() {
+        const totalItems = allUsersData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+
+        paginationInfo.textContent = `${startIndex}-${endIndex} / ${totalItems}`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage >= totalPages || totalPages === 0;
+      }
+
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderUsersTable(allUsersData);
+          updatePaginationControls();
+        }
+      });
+
+      nextPageBtn.addEventListener("click", () => {
+        const totalPages = Math.ceil(allUsersData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderUsersTable(allUsersData);
+          updatePaginationControls();
+        }
+      });
+
+      // Initialize sortable headers
+      function initializeSorting() {
+        const sortableHeaders = document.querySelectorAll("th.sortable");
+        let activeDropdown = null;
+
+        sortableHeaders.forEach((header) => {
+          const dropdown = header.querySelector(".sort-dropdown");
+          
+          header.addEventListener("click", (e) => {
+            // Don't toggle if clicking inside dropdown
+            if (e.target.closest(".sort-dropdown")) return;
+
+            // Close other dropdowns
+            if (activeDropdown && activeDropdown !== dropdown) {
+              activeDropdown.classList.remove("show");
+            }
+
+            // Toggle current dropdown
+            dropdown.classList.toggle("show");
+            activeDropdown = dropdown.classList.contains("show") ? dropdown : null;
+          });
+
+          // Handle sort button clicks
+          dropdown.querySelectorAll("button").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const column = header.dataset.column;
+              const direction = button.dataset.sort;
+              
+              // Update sort state
+              currentSort = { column, direction };
+              
+              // Reset to first page when sorting changes
+              currentPage = 1;
+              
+              // Update UI
+              updateSortIndicators(header, direction);
+              
+              // Close dropdown
+              dropdown.classList.remove("show");
+              activeDropdown = null;
+              
+              // Reload data with new sort
+              loadUsers();
+            });
+          });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest("th.sortable")) {
+            if (activeDropdown) {
+              activeDropdown.classList.remove("show");
+              activeDropdown = null;
+            }
+          }
+        });
+      }
+
+      function updateSortIndicators(activeHeader, direction) {
+        // Remove all sort classes
+        document.querySelectorAll("th.sortable").forEach((th) => {
+          th.classList.remove("sort-asc", "sort-desc");
+        });
+
+        // Add sort class to active header
+        if (direction === "asc") {
+          activeHeader.classList.add("sort-asc");
+        } else if (direction === "desc") {
+          activeHeader.classList.add("sort-desc");
+        }
+      }
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) {
+          return value;
+        }
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}`;
+      }
+
+      async function ensureSession() {
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
+        if (error || !session) {
+          window.location.href = "login.html";
+          return null;
+        }
+        return session;
+      }
+
+      async function fetchCount(column, sinceIso) {
+        const { count, error } = await supabaseClient
+          .from("users")
+          .select("id", { count: "exact", head: true })
+          .gte(column, sinceIso);
+
+        if (error) {
+          throw error;
+        }
+
+        return count ?? 0;
+      }
+
+      async function loadMetrics() {
+        const now = Date.now();
+        const dayAgoIso = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+        const weekAgoIso = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const [signupsDay, signupsWeek, activeDay, activeWeek] = await Promise.all(
+          [
+            fetchCount("created_on", dayAgoIso),
+            fetchCount("created_on", weekAgoIso),
+            fetchCount("last_used", dayAgoIso),
+            fetchCount("last_used", weekAgoIso),
+          ]
+        );
+
+        metrics.signupsDay.textContent = signupsDay;
+        metrics.signupsWeek.textContent = signupsWeek;
+        metrics.activeDay.textContent = activeDay;
+        metrics.activeWeek.textContent = activeWeek;
+      }
+
+      async function renderUsersTable(users) {
+        // Store all users data for pagination
+        allUsersData = users || [];
+
+        // Apply pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedUsers = allUsersData.slice(startIndex, endIndex);
+
+        if (!paginatedUsers || paginatedUsers.length === 0) {
+          usersTableBody.innerHTML =
+          '<tr class="no-animate"><td colspan="21" class="muted">No users found.</td></tr>';
+          updatePaginationControls();
+          return;
+        }
+        let DOLLAR = 0;
+        try {
+          const resp = await fetch("https://api.collectapi.com/economy/exchange?int=1&to=TRY&base=USD", {
+            method: "GET",
+            headers: {
+              "authorization": "apikey 33Y7G16ei40fjBwG1Lv6yc:53nnnw1qTkPvnchhUmMnSg",
+              "content-type": "application/json"
+            }
+          })
+          const datajson = await resp.json();
+          DOLLAR = Number(datajson.result[0].data[0].calculated) / 10;
+        } catch (error) {
+          console.error(error);
+          DOLLAR = 42.5;
+        }
+
+
+        usersTableBody.innerHTML = paginatedUsers
+          .map(
+            (user) => `
+              <tr class="${user.account_tier === "premium" ? "premium-row" : ""}">
+                <td>${user.id}</td>
+                <td>${user.account_tier === "free" ? "Ücretsiz" : "Premium"}</td>
+                <td>${formatDate(user.created_on)}</td>
+                <td>${formatDate(user.last_used)}</td>
+                <td>${user.daily_classic_message_count}</td>
+                <td>${user.daily_reasoning_message_count}</td>
+                <td>${user.total_classic_message_count_free + user.total_classic_message_count_premium}</td>
+                <td>${user.total_reasoning_message_count}</td>
+                <td>≈ ${(((user.total_classic_input_tokens_cache_miss_free + user.total_classic_input_tokens_cache_miss_premium) * 0.28 + (user.total_classic_input_tokens_cache_hit_free + user.total_classic_input_tokens_cache_hit_premium) * 0.028 + (user.total_classic_output_tokens_free + user.total_classic_output_tokens_premium) * 0.42) * DOLLAR / 10**6).toFixed(2)}</td>
+                <td>≈ ${((user.total_reasoning_input_tokens_cache_miss * 0.28 + user.total_reasoning_input_tokens_cache_hit * 0.028 + user.total_reasoning_output_tokens * 0.42) * DOLLAR / 10**6).toFixed(2)}</td>
+                <td>${user.info ?? "—"}</td>
+                <td>${user.daily_hadis?.hadis_title ?? "—"}</td>
+                <td>${user.daily_stories?.story_title ?? "—"}</td>
+                <td>${user.daily_facts?.fun_fact_title ?? "—"}</td>
+              </tr>
+            `
+          )
+          .join("");
+        
+        updatePaginationControls();
+      }
+
+      async function loadUsers() {
+        let query = supabaseClient
+          .from("users")
+          .select(
+            `
+            id,
+            account_tier,
+            created_on,
+            last_used,
+            daily_classic_message_count,
+            daily_reasoning_message_count,
+            total_classic_message_count_free,
+            total_classic_message_count_premium,
+            total_reasoning_message_count,
+            total_classic_output_tokens_free,
+            total_classic_input_tokens_cache_miss_free,
+            total_classic_input_tokens_cache_hit_free,
+            total_classic_output_tokens_premium,
+            total_classic_input_tokens_cache_miss_premium,
+            total_classic_input_tokens_cache_hit_premium,
+            total_reasoning_input_tokens_cache_miss,
+            total_reasoning_input_tokens_cache_hit,
+            total_reasoning_output_tokens,
+            user_statistics(premium_days, free_days),
+            info,
+            hadis_id,
+            story_id,
+            fun_fact_id,
+            daily_hadis(hadis_title),
+            daily_stories(story_title),
+            daily_facts(fun_fact_title)
+          `
+          );
+
+        // Apply sorting if set
+        if (currentSort.column && currentSort.direction) {
+          const sortColumn = currentSort.column;
+          const sortDirection = currentSort.direction === "asc" ? true : false;
+
+          // Handle special cases - these will be sorted client-side
+          if (sortColumn === "hadis_title" || sortColumn === "story_title" || 
+              sortColumn === "fun_fact_title" || sortColumn === "total_classic_message_count" ||
+              sortColumn === "classic_cost" || sortColumn === "reasoning_cost" ||
+              sortColumn === "last_used") {
+            // These are calculated or joined columns, or need special null handling
+            // Will sort client-side
+          } else {
+            // Regular column sorting
+            query = query.order(sortColumn, { ascending: sortDirection });
+          }
+        }
+
+        const { data, error } = await query;
+        console.log(data);
+          const { data: rData, error: rError } = await supabaseClient
+          .from("requests")
+          .select(
+            `
+            time
+          `
+          )
+        
+
+        const { data: proxyData, error: proxyError } = await supabaseClient.functions.invoke('proxy', {
+            body: { endpoint: 'get_users' },
+        })
+
+        if (proxyError) {
+            throw proxyError;
+        }
+
+        if (error) {
+          throw error;
+        }
+
+        // Apply client-side sorting for calculated or joined columns
+        let sortedData = data;
+        if (currentSort.column && currentSort.direction && data) {
+          const sortColumn = currentSort.column;
+          const sortDirection = currentSort.direction === "asc" ? 1 : -1;
+
+          if (sortColumn === "total_classic_message_count") {
+            sortedData = [...data].sort((a, b) => {
+              const aVal = (a.total_classic_message_count_free || 0) + (a.total_classic_message_count_premium || 0);
+              const bVal = (b.total_classic_message_count_free || 0) + (b.total_classic_message_count_premium || 0);
+              return (aVal - bVal) * sortDirection;
+            });
+          } else if (sortColumn === "classic_cost" || sortColumn === "reasoning_cost") {
+
+            sortedData = [...data].sort((a, b) => {
+              let aVal, bVal;
+              
+              if (sortColumn === "classic_cost") {
+                aVal = ((a.total_classic_input_tokens_cache_miss_free || 0) + (a.total_classic_input_tokens_cache_miss_premium || 0)) * 0.28 +
+                       ((a.total_classic_input_tokens_cache_hit_free || 0) + (a.total_classic_input_tokens_cache_hit_premium || 0)) * 0.028 +
+                       ((a.total_classic_output_tokens_free || 0) + (a.total_classic_output_tokens_premium || 0)) * 0.42;
+                
+                bVal = ((b.total_classic_input_tokens_cache_miss_free || 0) + (b.total_classic_input_tokens_cache_miss_premium || 0)) * 0.28 +
+                       ((b.total_classic_input_tokens_cache_hit_free || 0) + (b.total_classic_input_tokens_cache_hit_premium || 0)) * 0.028 +
+                       ((b.total_classic_output_tokens_free || 0) + (b.total_classic_output_tokens_premium || 0)) * 0.42;
+              } else {
+                // reasoning_cost
+                aVal = ((a.total_reasoning_input_tokens_cache_miss || 0) * 0.28 +
+                       (a.total_reasoning_input_tokens_cache_hit || 0) * 0.028 +
+                       (a.total_reasoning_output_tokens || 0) * 0.42);
+                
+                bVal = ((b.total_reasoning_input_tokens_cache_miss || 0) * 0.28 +
+                       (b.total_reasoning_input_tokens_cache_hit || 0) * 0.028 +
+                       (b.total_reasoning_output_tokens || 0) * 0.42);
+              }
+              
+              return (aVal - bVal) * sortDirection;
+            });
+          } else if (sortColumn === "last_used") {
+            sortedData = [...data].sort((a, b) => {
+              const aVal = a.last_used;
+              const bVal = b.last_used;
+              
+              // Handle null values - always put them at the end
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1; // a is null, put it after b
+              if (!bVal) return -1; // b is null, put it after a
+              
+              // Both have values, sort normally
+              const aDate = new Date(aVal).getTime();
+              const bDate = new Date(bVal).getTime();
+              return (aDate - bDate) * sortDirection;
+            });
+          } else if (sortColumn === "hadis_title") {
+            sortedData = [...data].sort((a, b) => {
+              const aVal = a.daily_hadis?.hadis_title || "";
+              const bVal = b.daily_hadis?.hadis_title || "";
+              return aVal.localeCompare(bVal) * sortDirection;
+            });
+          } else if (sortColumn === "story_title") {
+            sortedData = [...data].sort((a, b) => {
+              const aVal = a.daily_stories?.story_title || "";
+              const bVal = b.daily_stories?.story_title || "";
+              return aVal.localeCompare(bVal) * sortDirection;
+            });
+          } else if (sortColumn === "fun_fact_title") {
+            sortedData = [...data].sort((a, b) => {
+              const aVal = a.daily_facts?.fun_fact_title || "";
+              const bVal = b.daily_facts?.fun_fact_title || "";
+              return aVal.localeCompare(bVal) * sortDirection;
+            });
+          }
+        }
+
+        renderUsersTable(sortedData);
+      }
+
+      async function refreshDashboard({ skipSessionCheck = false } = {}) {
+        try {
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = "Güncelleniyor...";
+          statusBanner.textContent = "Veriler eşleniyor...";
+
+          if (!skipSessionCheck) {
+            const session = await ensureSession();
+            if (!session) return;
+          }
+
+          await Promise.all([loadMetrics(), loadUsers()]);
+          statusBanner.textContent = "Gösterge paneli güncellendi.";
+        } catch (error) {
+          console.error("Failed to load admin data:", error);
+          statusBanner.textContent =
+            error.message || "Bilgiler yüklenemedi.";
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "Güncelle";
+        }
+      }
+
+      async function initialise() {
+        const session = await ensureSession();
+        if (!session) return;
+
+        initializeSorting();
+        await refreshDashboard({ skipSessionCheck: true });
+      }
+
+      initialise();
+    </script>
+  </body>
+</html>
+
