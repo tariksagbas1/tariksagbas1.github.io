@@ -1103,7 +1103,7 @@
           }
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query.limit(10000);
         console.log(data);
           const { data: rData, error: rError } = await supabaseClient
           .from("requests")
