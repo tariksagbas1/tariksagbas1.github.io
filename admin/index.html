@@ -557,6 +557,61 @@
         transform: translateY(0);
         box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
       }
+
+      #active-time-period {
+        padding: 4px 8px 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        outline: none;
+      }
+
+      #active-time-period:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #active-time-period:focus {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+      }
+
+      #active-time-period option,
+      #signups-time-period option {
+        background: #ffffff;
+        color: #1f2937;
+        padding: 8px;
+      }
+
+      #signups-time-period {
+        padding: 4px 8px 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        outline: none;
+      }
+
+      #signups-time-period:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #signups-time-period:focus {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+      }
     </style>
   </head>
   <body>
@@ -582,24 +637,32 @@
           </div>
           <section class="metrics">
             <article class="metric-card">
-              <span class="metric-title">Kayıt Sayısı (24s)</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span class="metric-title">Kayıt Sayısı</span>
+                <select id="signups-time-period">
+                  <option value="15">15 dakika</option>
+                  <option value="60">1 saat</option>
+                  <option value="480">8 saat</option>
+                  <option value="1440" selected>24 saat</option>
+                  <option value="10080">1 hafta</option>
+                </select>
+              </div>
               <span id="metric-signups-day" class="metric-value">–</span>
-              <span class="metric-subtitle">Son 24 saatte kaydolan kullanıcılar</span>
+              <span class="metric-subtitle" id="signups-subtitle">Son 24 saatte kaydolan kullanıcılar</span>
             </article>
             <article class="metric-card">
-              <span class="metric-title">Kayıt Sayısı (7g)</span>
-              <span id="metric-signups-week" class="metric-value">–</span>
-              <span class="metric-subtitle">Son 7 günde kaydolan kullanıcılar</span>
-            </article>
-            <article class="metric-card">
-              <span class="metric-title">Aktif (24s)</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span class="metric-title">Aktif Kullanıcılar</span>
+                <select id="active-time-period">
+                  <option value="15">15 dakika</option>
+                  <option value="60">1 saat</option>
+                  <option value="480">8 saat</option>
+                  <option value="1440" selected>24 saat</option>
+                  <option value="10080">1 hafta</option>
+                </select>
+              </div>
               <span id="metric-active-day" class="metric-value">–</span>
-              <span class="metric-subtitle">Son 24 saatte aktif kullanıcılar</span>
-            </article>
-            <article class="metric-card">
-              <span class="metric-title">Aktif (7g)</span>
-              <span id="metric-active-week" class="metric-value">–</span>
-              <span class="metric-subtitle">Son 7 günde aktif kullanıcılar</span>
+              <span class="metric-subtitle" id="active-subtitle">Son 24 saatte aktif kullanıcılar</span>
             </article>
           </section>
 
@@ -753,10 +816,18 @@
       const statusBanner = document.getElementById("status");
       const metrics = {
         signupsDay: document.getElementById("metric-signups-day"),
-        signupsWeek: document.getElementById("metric-signups-week"),
         activeDay: document.getElementById("metric-active-day"),
-        activeWeek: document.getElementById("metric-active-week"),
       };
+
+      const activeTimePeriodSelect = document.getElementById("active-time-period");
+      activeTimePeriodSelect.addEventListener("change", () => {
+        loadMetrics();
+      });
+
+      const signupsTimePeriodSelect = document.getElementById("signups-time-period");
+      signupsTimePeriodSelect.addEventListener("change", () => {
+        loadMetrics();
+      });
 
       const usersTableBody = document.getElementById("users-table-body");
       const signOutBtn = document.getElementById("sign-out");
@@ -956,7 +1027,20 @@
         return session;
       }
 
-      async function fetchCount(column, sinceIso) {
+      async function fetchCountFromSessions(column, sinceIso) {
+        const { count, error } = await supabaseClient
+          .from("sessions")
+          .select("user_id", { count: "exact", head: true })
+          .gte(column, sinceIso);
+
+        if (error) {
+          throw error;
+        }
+
+        return count ?? 0;
+      }
+
+      async function fetchCountFromUsers(column, sinceIso) {
         const { count, error } = await supabaseClient
           .from("users")
           .select("id", { count: "exact", head: true })
@@ -971,22 +1055,41 @@
 
       async function loadMetrics() {
         const now = Date.now();
-        const dayAgoIso = new Date(now - 24 * 60 * 60 * 1000).toISOString();
-        const weekAgoIso = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [signupsDay, signupsWeek, activeDay, activeWeek] = await Promise.all(
+        // Get signups time period from dropdown
+        const signupsTimePeriodSelect = document.getElementById("signups-time-period");
+        const signupsMinutes = parseInt(signupsTimePeriodSelect.value);
+        const signupsTimeAgoIso = new Date(now - signupsMinutes * 60 * 1000).toISOString();
+        
+        // Get active time period from dropdown
+        const activeTimePeriodSelect = document.getElementById("active-time-period");
+        const activeMinutes = parseInt(activeTimePeriodSelect.value);
+        const activeTimeAgoIso = new Date(now - activeMinutes * 60 * 1000).toISOString();
+        
+        // Update subtitles based on selection
+        const timeLabels = {
+          15: "15 dakika",
+          60: "1 saat",
+          480: "8 saat",
+          1440: "24 saat",
+          10080: "1 hafta"
+        };
+        
+        const signupsSubtitle = document.getElementById("signups-subtitle");
+        signupsSubtitle.textContent = `Son ${timeLabels[signupsMinutes]} kaydolan kullanıcılar`;
+        
+        const activeSubtitle = document.getElementById("active-subtitle");
+        activeSubtitle.textContent = `Son ${timeLabels[activeMinutes]} aktif kullanıcılar`;
+
+        const [signupsCount, activeCount] = await Promise.all(
           [
-            fetchCount("created_on", dayAgoIso),
-            fetchCount("created_on", weekAgoIso),
-            fetchCount("last_used", dayAgoIso),
-            fetchCount("last_used", weekAgoIso),
+            fetchCountFromUsers("created_on", signupsTimeAgoIso),
+            fetchCountFromSessions("created_at", activeTimeAgoIso),
           ]
         );
 
-        metrics.signupsDay.textContent = signupsDay;
-        metrics.signupsWeek.textContent = signupsWeek;
-        metrics.activeDay.textContent = activeDay;
-        metrics.activeWeek.textContent = activeWeek;
+        metrics.signupsDay.textContent = signupsCount;
+        metrics.activeDay.textContent = activeCount;
       }
 
       async function renderUsersTable(users) {
@@ -1104,7 +1207,6 @@
         }
 
         const { data, error } = await query.limit(10000);
-        console.log(data);
           const { data: rData, error: rError } = await supabaseClient
           .from("requests")
           .select(
