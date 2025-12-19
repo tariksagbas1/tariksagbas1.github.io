@@ -249,6 +249,12 @@
         min-width: 140px;
       }
 
+      th.cost-column,
+      td.cost-column {
+        min-width: 250px;
+        width: 250px;
+      }
+
       th {
         position: relative;
         user-select: none;
@@ -521,6 +527,36 @@
         font-size: 1.2rem;
         color: #1f2937;
       }
+
+      #cost-view-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 12px;
+        margin-left: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        text-decoration: none;
+        opacity: 1;
+      }
+
+      #cost-view-toggle:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #cost-view-toggle:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+      }
     </style>
   </head>
   <body>
@@ -590,7 +626,10 @@
                     <th class="upper-header"></th>
                     <th class="upper-header" colspan="2">Kalan Mesajlar</th>
                     <th class="upper-header" colspan="2">Toplam Mesajlar</th>
-                    <th class="upper-header" colspan="2">Maliyet</th>
+                    <th class="upper-header cost-column" id="cost-header" colspan="1" style="position: relative;">
+                      <span>Maliyet (TRY)</span>
+                      <button id="cost-view-toggle" type="button">Ayır</button>
+                    </th>
                     <th class="upper-header"></th>
                     <th class="upper-header"></th>
                     <th class="upper-header"></th>
@@ -645,13 +684,19 @@
                         <button data-sort="desc">Azalan Sıralama</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="classic_cost">Klasik Model Maliyeti (TRY)
+                    <th id="classic-cost-header" class="sortable" data-column="classic_cost" style="display: none;">Klasik
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="reasoning_cost">Akıl Yürütme Modeli Maliyeti (TRY)
+                    <th id="reasoning-cost-header" class="sortable" data-column="reasoning_cost" style="display: none;">Akıl Yürütme
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                      </div>
+                    </th>
+                    <th id="total-cost-header" class="sortable" data-column="total_cost">Toplam Maliyet
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
@@ -736,6 +781,53 @@
       const prevPageBtn = document.getElementById("prev-page");
       const nextPageBtn = document.getElementById("next-page");
       const paginationInfo = document.getElementById("pagination-info");
+
+      // Cost view state (true = combined, false = split)
+      let costViewCombined = true; // Default to combined view
+      const costViewToggle = document.getElementById("cost-view-toggle");
+      const costHeader = document.getElementById("cost-header");
+      const classicCostHeader = document.getElementById("classic-cost-header");
+      const reasoningCostHeader = document.getElementById("reasoning-cost-header");
+      const totalCostHeader = document.getElementById("total-cost-header");
+
+      costViewToggle.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent any other click handlers
+        costViewCombined = !costViewCombined;
+        updateCostView();
+        renderUsersTable(allUsersData);
+      });
+
+      function updateCostView() {
+        if (costViewCombined) {
+          costHeader.colSpan = 1;
+          classicCostHeader.style.display = "none";
+          reasoningCostHeader.style.display = "none";
+          totalCostHeader.style.display = "";
+          costViewToggle.textContent = "Ayır";
+        } else {
+          costHeader.colSpan = 2;
+          classicCostHeader.style.display = "";
+          reasoningCostHeader.style.display = "";
+          totalCostHeader.style.display = "none";
+          costViewToggle.textContent = "Birleştir";
+        }
+      }
+
+      function calculateClassicCost(user) {
+        return ((user.total_classic_input_tokens_cache_miss_free || 0) + (user.total_classic_input_tokens_cache_miss_premium || 0)) * 0.28 +
+               ((user.total_classic_input_tokens_cache_hit_free || 0) + (user.total_classic_input_tokens_cache_hit_premium || 0)) * 0.028 +
+               ((user.total_classic_output_tokens_free || 0) + (user.total_classic_output_tokens_premium || 0)) * 0.42;
+      }
+
+      function calculateReasoningCost(user) {
+        return ((user.total_reasoning_input_tokens_cache_miss || 0) * 0.28 +
+                (user.total_reasoning_input_tokens_cache_hit || 0) * 0.028 +
+                (user.total_reasoning_output_tokens || 0) * 0.42);
+      }
+
+      function calculateTotalCost(user) {
+        return calculateClassicCost(user) + calculateReasoningCost(user);
+      }
 
       function updatePaginationControls() {
         const totalItems = allUsersData.length;
@@ -907,8 +999,9 @@
         const paginatedUsers = allUsersData.slice(startIndex, endIndex);
 
         if (!paginatedUsers || paginatedUsers.length === 0) {
+          const colspan = costViewCombined ? 20 : 21;
           usersTableBody.innerHTML =
-          '<tr class="no-animate"><td colspan="21" class="muted">No users found.</td></tr>';
+          `<tr class="no-animate"><td colspan="${colspan}" class="muted">No users found.</td></tr>`;
           updatePaginationControls();
           return;
         }
@@ -941,8 +1034,11 @@
                 <td>${user.daily_reasoning_message_count}</td>
                 <td>${user.total_classic_message_count_free + user.total_classic_message_count_premium}</td>
                 <td>${user.total_reasoning_message_count}</td>
-                <td>≈ ${(((user.total_classic_input_tokens_cache_miss_free + user.total_classic_input_tokens_cache_miss_premium) * 0.28 + (user.total_classic_input_tokens_cache_hit_free + user.total_classic_input_tokens_cache_hit_premium) * 0.028 + (user.total_classic_output_tokens_free + user.total_classic_output_tokens_premium) * 0.42) * DOLLAR / 10**6).toFixed(2)}</td>
-                <td>≈ ${((user.total_reasoning_input_tokens_cache_miss * 0.28 + user.total_reasoning_input_tokens_cache_hit * 0.028 + user.total_reasoning_output_tokens * 0.42) * DOLLAR / 10**6).toFixed(2)}</td>
+                ${costViewCombined 
+                  ? `<td>≈ ${(calculateTotalCost(user) * DOLLAR / 10**6).toFixed(2)}</td>`
+                  : `<td>≈ ${(calculateClassicCost(user) * DOLLAR / 10**6).toFixed(2)}</td>
+                     <td>≈ ${(calculateReasoningCost(user) * DOLLAR / 10**6).toFixed(2)}</td>`
+                }
                 <td>${user.info ?? "—"}</td>
                 <td>${user.daily_hadis?.hadis_title ?? "—"}</td>
                 <td>${user.daily_stories?.story_title ?? "—"}</td>
@@ -997,7 +1093,7 @@
           // Handle special cases - these will be sorted client-side
           if (sortColumn === "hadis_title" || sortColumn === "story_title" || 
               sortColumn === "fun_fact_title" || sortColumn === "total_classic_message_count" ||
-              sortColumn === "classic_cost" || sortColumn === "reasoning_cost" ||
+              sortColumn === "classic_cost" || sortColumn === "reasoning_cost" || sortColumn === "total_cost" ||
               sortColumn === "last_used") {
             // These are calculated or joined columns, or need special null handling
             // Will sort client-side
@@ -1042,28 +1138,21 @@
               const bVal = (b.total_classic_message_count_free || 0) + (b.total_classic_message_count_premium || 0);
               return (aVal - bVal) * sortDirection;
             });
-          } else if (sortColumn === "classic_cost" || sortColumn === "reasoning_cost") {
+          } else if (sortColumn === "classic_cost" || sortColumn === "reasoning_cost" || sortColumn === "total_cost") {
 
             sortedData = [...data].sort((a, b) => {
               let aVal, bVal;
               
               if (sortColumn === "classic_cost") {
-                aVal = ((a.total_classic_input_tokens_cache_miss_free || 0) + (a.total_classic_input_tokens_cache_miss_premium || 0)) * 0.28 +
-                       ((a.total_classic_input_tokens_cache_hit_free || 0) + (a.total_classic_input_tokens_cache_hit_premium || 0)) * 0.028 +
-                       ((a.total_classic_output_tokens_free || 0) + (a.total_classic_output_tokens_premium || 0)) * 0.42;
-                
-                bVal = ((b.total_classic_input_tokens_cache_miss_free || 0) + (b.total_classic_input_tokens_cache_miss_premium || 0)) * 0.28 +
-                       ((b.total_classic_input_tokens_cache_hit_free || 0) + (b.total_classic_input_tokens_cache_hit_premium || 0)) * 0.028 +
-                       ((b.total_classic_output_tokens_free || 0) + (b.total_classic_output_tokens_premium || 0)) * 0.42;
+                aVal = calculateClassicCost(a);
+                bVal = calculateClassicCost(b);
+              } else if (sortColumn === "reasoning_cost") {
+                aVal = calculateReasoningCost(a);
+                bVal = calculateReasoningCost(b);
               } else {
-                // reasoning_cost
-                aVal = ((a.total_reasoning_input_tokens_cache_miss || 0) * 0.28 +
-                       (a.total_reasoning_input_tokens_cache_hit || 0) * 0.028 +
-                       (a.total_reasoning_output_tokens || 0) * 0.42);
-                
-                bVal = ((b.total_reasoning_input_tokens_cache_miss || 0) * 0.28 +
-                       (b.total_reasoning_input_tokens_cache_hit || 0) * 0.028 +
-                       (b.total_reasoning_output_tokens || 0) * 0.42);
+                // total_cost
+                aVal = calculateTotalCost(a);
+                bVal = calculateTotalCost(b);
               }
               
               return (aVal - bVal) * sortDirection;
@@ -1134,6 +1223,7 @@
         const session = await ensureSession();
         if (!session) return;
 
+        updateCostView(); // Initialize cost view state
         initializeSorting();
         await refreshDashboard({ skipSessionCheck: true });
       }
