@@ -1029,7 +1029,7 @@
 
       async function fetchCountFromSessions(column, sinceIso) {
         const { count, error } = await supabaseClient
-          .from("sessions")
+          .from("user_statistics")
           .select("user_id", { count: "exact", head: true })
           .gte(column, sinceIso);
 
@@ -1084,7 +1084,7 @@
         const [signupsCount, activeCount] = await Promise.all(
           [
             fetchCountFromUsers("created_on", signupsTimeAgoIso),
-            fetchCountFromSessions("created_at", activeTimeAgoIso),
+            fetchCountFromSessions("last_session", activeTimeAgoIso),
           ]
         );
 
