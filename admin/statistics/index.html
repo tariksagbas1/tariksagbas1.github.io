@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statistics Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      main {
+        padding: 32px;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .table-wrapper::-webkit-scrollbar {
+        height: 10px;
+      }
+
+      .table-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.6);
+        border-radius: 999px;
+      }
+
+      table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        text-align: center;
+        font-size: 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+        min-width: 140px;
+      }
+
+      th {
+        position: relative;
+        user-select: none;
+        white-space: nowrap;
+        padding: 25px 40px;
+      }
+
+      th.sortable {
+        cursor: pointer;
+        padding-right: 32px;
+      }
+
+      th.sortable:hover {
+        background: #f3f4f6;
+      }
+
+      th.sortable::after {
+        content: "⇅";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.85rem;
+        color: #9ca3af;
+      }
+
+      th.sort-asc::after {
+        content: "↑";
+        color: #4f46e5;
+      }
+
+      th.sort-desc::after {
+        content: "↓";
+        color: #4f46e5;
+      }
+
+      th.sort-asc,
+      th.sort-desc {
+        background: rgba(79, 70, 229, 0.06);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+      }
+
+      th.sort-asc:hover,
+      th.sort-desc:hover {
+        background: rgba(79, 70, 229, 0.08);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.3);
+      }
+
+      .sort-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+        z-index: 100;
+        min-width: 160px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0.2s;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .sort-dropdown.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0s;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .sort-dropdown button {
+        display: block;
+        width: 100%;
+        padding: 12px 18px;
+        text-align: left;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1f2937;
+        transition: all 0.15s ease;
+        position: relative;
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      .sort-dropdown.show button {
+        animation: slideInButton 0.2s ease forwards;
+      }
+
+      .sort-dropdown.show button:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      .sort-dropdown.show button:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .sort-dropdown.show button:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+
+      @keyframes slideInButton {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .sort-dropdown button:hover {
+        background: #f8fafc;
+        color: #4f46e5;
+      }
+
+      .sort-dropdown button:active {
+        background: #f1f5f9;
+      }
+
+      .sort-dropdown button:first-child {
+        padding-top: 14px;
+      }
+
+      .sort-dropdown button:last-child {
+        padding-bottom: 14px;
+      }
+
+      .sort-dropdown button:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        right: 18px;
+        height: 1px;
+        background: #f1f5f9;
+      }
+
+      .sort-dropdown button[data-sort="clear"] {
+        display: none;
+      }
+
+      .sort-dropdown button[data-sort="clear"].show {
+        display: block;
+      }
+
+      tbody tr:not(.no-animate) {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRow 0.4s ease forwards;
+      }
+
+      tbody tr:not(.no-animate):nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(3) {
+        animation-delay: 0.15s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(4) {
+        animation-delay: 0.2s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(5) {
+        animation-delay: 0.25s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(n+6) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes slideInRow {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      tbody tr:hover {
+        background: rgba(99, 102, 241, 0.04);
+      }
+
+      .muted {
+        color: #6b7280;
+      }
+
+      .upper-header {
+        text-align: center;
+        border-style: solid;
+        border-color: #e5e7eb;
+        border-radius: 10px;
+        padding: 10px;
+        margin: 10px;
+        background-color: #f9fafb;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #1f2937;
+      }
+
+
+      #days-view-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 12px;
+        margin-left: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        text-decoration: none;
+        opacity: 1;
+      }
+
+      #days-view-toggle:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #days-view-toggle:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+
+        header button {
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="../">Kullanıcılar</a>
+          <a href="../support">Destek</a>
+          <a href="../statistics" class="active">İstatistikler</a>
+          <a href="../requests">İstekler</a>
+        </nav>
+      </aside>
+      <div class="content">
+        <header>
+          <h2>İstatistikler Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Güncelle</button>
+            <button id="sign-out">Çıkış Yap</button>
+          </div>
+        </header>
+        <main>
+          <div id="status" class="status-banner" aria-live="polite">
+            İstatistikler yükleniyor...
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Kullanıcı İstatistikleri</h2>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="upper-header" colspan="1"></th>
+                    <th class="upper-header" colspan="2">Girişler</th>
+                    <th class="upper-header" colspan="2"></th>
+                    <th class="upper-header" id="days-header" colspan="1" style="position: relative;">
+                      <span>Toplam Günler</span>
+                      <button id="days-view-toggle" type="button">Ayır</button>
+                    </th>
+                    <th class="upper-header" colspan="1"></th>
+                  </tr>
+                  <tr>
+                    <th class="sortable" data-column="user_id">ID
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="total_sessions">Toplam
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="daily_sessions">Günlük
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="binary_version">Binary Version
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="os">OS
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" id="total-days-header" data-column="total_days">Toplam Günler
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" id="premium-days-col-header" style="display: none;" data-column="premium_days">Premium
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" id="free-days-col-header" style="display: none;" data-column="free_days">Ücretsiz
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="device_model">Device Model
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="statistics-table-body">
+                  <tr>
+                    <td colspan="7" class="muted">İstatistikler yükleniyor…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const statisticsTableBody = document.getElementById("statistics-table-body");
+      const signOutBtn = document.getElementById("sign-out");
+      const refreshBtn = document.getElementById("refresh");
+
+      // Days view state (true = combined, false = split)
+      let daysViewCombined = true;
+      const daysViewToggle = document.getElementById("days-view-toggle");
+      const daysHeader = document.getElementById("days-header");
+      const totalDaysHeader = document.getElementById("total-days-header");
+      const premiumDaysColHeader = document.getElementById("premium-days-col-header");
+      const freeDaysColHeader = document.getElementById("free-days-col-header");
+
+      // Sorting state
+      let currentSort = { column: null, direction: null };
+
+      // Store all statistics data for client-side filtering and sorting
+      let allStatisticsData = [];
+      let originalUnsortedData = []; // Store original order from database
+
+      daysViewToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        daysViewCombined = !daysViewCombined;
+        updateDaysView();
+        sortAndRenderStatistics();
+      });
+
+      // Initialize sortable headers
+      function initializeSorting() {
+        const sortableHeaders = document.querySelectorAll("th.sortable");
+        let activeDropdown = null;
+
+        sortableHeaders.forEach((header) => {
+          const dropdown = header.querySelector(".sort-dropdown");
+          
+          header.addEventListener("click", (e) => {
+            // Don't toggle if clicking inside dropdown
+            if (e.target.closest(".sort-dropdown")) return;
+
+            // Close other dropdowns
+            if (activeDropdown && activeDropdown !== dropdown) {
+              activeDropdown.classList.remove("show");
+            }
+
+            // Toggle current dropdown
+            dropdown.classList.toggle("show");
+            activeDropdown = dropdown.classList.contains("show") ? dropdown : null;
+          });
+
+          // Handle sort button clicks
+          dropdown.querySelectorAll("button").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const column = header.dataset.column;
+              const direction = button.dataset.sort;
+              
+              // Handle clear sorting
+              if (direction === "clear") {
+                currentSort = { column: null, direction: null };
+                updateSortIndicators(null, null);
+              } else {
+                // Update sort state
+                currentSort = { column, direction };
+                updateSortIndicators(header, direction);
+              }
+              
+              // Close dropdown
+              dropdown.classList.remove("show");
+              activeDropdown = null;
+              
+              // Sort and render data
+              sortAndRenderStatistics();
+            });
+          });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest("th.sortable")) {
+            if (activeDropdown) {
+              activeDropdown.classList.remove("show");
+              activeDropdown = null;
+            }
+          }
+        });
+      }
+
+      function updateSortIndicators(activeHeader, direction) {
+        // Remove all sort classes
+        document.querySelectorAll("th.sortable").forEach((th) => {
+          th.classList.remove("sort-asc", "sort-desc");
+        });
+
+        // Hide all clear buttons
+        document.querySelectorAll('button[data-sort="clear"]').forEach((btn) => {
+          btn.classList.remove("show");
+        });
+
+        // Add sort class to active header (if not clearing)
+        if (activeHeader && direction) {
+          if (direction === "asc") {
+            activeHeader.classList.add("sort-asc");
+          } else if (direction === "desc") {
+            activeHeader.classList.add("sort-desc");
+          }
+          
+          // Show clear button only in the active column's dropdown
+          const clearButton = activeHeader.querySelector('button[data-sort="clear"]');
+          if (clearButton) {
+            clearButton.classList.add("show");
+          }
+        }
+      }
+
+      function compareVersions(a, b) {
+        // Parse version strings like "2.0.1" or "1.5.1"
+        const parseVersion = (v) => {
+          if (!v || v === "—") return [0, 0, 0];
+          const parts = String(v).split('.').map(p => parseInt(p) || 0);
+          while (parts.length < 3) parts.push(0);
+          return parts;
+        };
+        
+        const aParts = parseVersion(a);
+        const bParts = parseVersion(b);
+        
+        for (let i = 0; i < 3; i++) {
+          if (aParts[i] !== bParts[i]) {
+            return aParts[i] - bParts[i];
+          }
+        }
+        return 0;
+      }
+
+      function sortAndRenderStatistics() {
+        // If no sorting is applied, return to original unsorted order
+        if (!currentSort.column || !currentSort.direction || !allStatisticsData.length) {
+          renderStatisticsTable(originalUnsortedData.length > 0 ? originalUnsortedData : allStatisticsData);
+          return;
+        }
+
+        const sortColumn = currentSort.column;
+        const sortDirection = currentSort.direction === "asc" ? 1 : -1;
+
+        let sortedData = [...allStatisticsData].sort((a, b) => {
+          let aVal, bVal;
+
+          switch (sortColumn) {
+            case "user_id":
+              aVal = a.user_id || 0;
+              bVal = b.user_id || 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "total_sessions":
+              aVal = a.total_sessions ?? 0;
+              bVal = b.total_sessions ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "daily_sessions":
+              aVal = a.daily_sessions ?? 0;
+              bVal = b.daily_sessions ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "binary_version":
+              aVal = a.binary_version || "";
+              bVal = b.binary_version || "";
+              return compareVersions(aVal, bVal) * sortDirection;
+
+            case "os":
+              const aOs = a.users?.os || "";
+              const aOsVersion = a.os_version || "";
+              aVal = aOs && aOsVersion ? `${aOs} ${aOsVersion}` : aOs || aOsVersion || "";
+              
+              const bOs = b.users?.os || "";
+              const bOsVersion = b.os_version || "";
+              bVal = bOs && bOsVersion ? `${bOs} ${bOsVersion}` : bOs || bOsVersion || "";
+              
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "total_days":
+              aVal = (a.premium_days || 0) + (a.free_days || 0);
+              bVal = (b.premium_days || 0) + (b.free_days || 0);
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "premium_days":
+              aVal = a.premium_days ?? 0;
+              bVal = b.premium_days ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "free_days":
+              aVal = a.free_days ?? 0;
+              bVal = b.free_days ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "device_model":
+              aVal = a.users?.device_model || "";
+              bVal = b.users?.device_model || "";
+              
+              // Always put empty values last, regardless of sort direction
+              if (!aVal && !bVal) return 0; // Both empty, equal
+              if (!aVal) return 1; // a is empty, put it last
+              if (!bVal) return -1; // b is empty, put it last
+              
+              // Neither is empty, sort normally
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            default:
+              return 0;
+          }
+        });
+
+        renderStatisticsTable(sortedData);
+      }
+
+      function updateDaysView() {
+        if (daysViewCombined) {
+          daysHeader.colSpan = 1;
+          premiumDaysColHeader.style.display = "none";
+          freeDaysColHeader.style.display = "none";
+          totalDaysHeader.style.display = "";
+          daysViewToggle.textContent = "Ayır";
+        } else {
+          daysHeader.colSpan = 2;
+          premiumDaysColHeader.style.display = "";
+          freeDaysColHeader.style.display = "";
+          totalDaysHeader.style.display = "none";
+          daysViewToggle.textContent = "Birleştir";
+        }
+      }
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "login.html";
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        refreshDashboard();
+      });
+
+      async function ensureSession() {
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
+        if (error || !session) {
+          window.location.href = "login.html";
+          return null;
+        }
+        return session;
+      }
+
+      async function loadStatistics() {
+        const { data, error } = await supabaseClient
+          .from("user_statistics")
+          .select(
+            `
+            user_id,
+            total_sessions,
+            daily_sessions,
+            binary_version,
+            os_version,
+            premium_days,
+            free_days,
+            users(os, device_model)
+          `
+          )
+          .order("user_id", { ascending: true })
+          .limit(10000);
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          const colspan = daysViewCombined ? 7 : 8;
+          statisticsTableBody.innerHTML =
+            `<tr><td colspan="${colspan}" class="muted">İstatistik bulunamadı.</td></tr>`;
+          return;
+        }
+
+        // Store data for client-side operations
+        allStatisticsData = data;
+        // Store original unsorted order (deep copy)
+        originalUnsortedData = JSON.parse(JSON.stringify(data));
+        sortAndRenderStatistics();
+      }
+
+      function renderStatisticsTable(statistics) {
+        // Use provided statistics or fall back to allStatisticsData
+        const dataToRender = statistics || allStatisticsData || [];
+
+        if (!dataToRender || dataToRender.length === 0) {
+          const colspan = daysViewCombined ? 7 : 8;
+          statisticsTableBody.innerHTML =
+            `<tr class="no-animate"><td colspan="${colspan}" class="muted">İstatistik bulunamadı.</td></tr>`;
+          return;
+        }
+        statisticsTableBody.innerHTML = dataToRender
+          .map(
+            (stat) => {
+              const os = stat.users?.os || "";
+              const osVersion = stat.os_version || "";
+              const osDisplay = os && osVersion ? `${os} ${osVersion}` : os || osVersion || "—";
+              
+              return `
+                <tr>
+                  <td>${stat.user_id || "—"}</td>
+                  <td>${stat.total_sessions ?? "—"}</td>
+                  <td>${stat.daily_sessions ?? "—"}</td>
+                  <td>${stat.binary_version || "—"}</td>
+                  <td>${osDisplay}</td>
+                  ${daysViewCombined 
+                    ? `<td>${(stat.premium_days || 0) + (stat.free_days || 0)}</td>`
+                    : `<td>${stat.premium_days ?? 0}</td>
+                       <td>${stat.free_days ?? 0}</td>`
+                  }
+                  <td>${stat.users?.device_model || "—"}</td>
+                </tr>
+              `;
+            }
+          )
+          .join("");
+      }
+
+      async function refreshDashboard({ skipSessionCheck = false } = {}) {
+        try {
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = "Güncelleniyor...";
+          statusBanner.textContent = "İstatistikler eşleniyor...";
+
+          if (!skipSessionCheck) {
+            const session = await ensureSession();
+            if (!session) return;
+          }
+
+          await loadStatistics();
+          statusBanner.textContent = "İstatistikler güncellendi.";
+        } catch (error) {
+          console.error("İstatistikler yüklenemedi:", error);
+          statusBanner.textContent =
+            error.message || "İstatistikler yüklenemedi.";
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "Güncelle";
+        }
+      }
+
+      async function initialise() {
+        const session = await ensureSession();
+        if (!session) return;
+
+        updateDaysView();
+        initializeSorting();
+        await refreshDashboard({ skipSessionCheck: true });
+      }
+
+      initialise();
+    </script>
+  </body>
+</html>
+

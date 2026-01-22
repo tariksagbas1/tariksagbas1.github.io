@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Requests Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      main {
+        padding: 32px;
+        max-width: 100%;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .table-wrapper::-webkit-scrollbar {
+        height: 10px;
+      }
+
+      .table-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.6);
+        border-radius: 999px;
+      }
+
+      table {
+        width: 100%;
+        min-width: 2400px;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        text-align: center;
+        font-size: 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+        min-width: 140px;
+      }
+
+      th {
+        position: relative;
+        user-select: none;
+        white-space: nowrap;
+        padding: 25px 40px;
+      }
+
+      th.sortable {
+        cursor: pointer;
+        padding-right: 32px;
+      }
+
+      th.sortable:hover {
+        background: #f3f4f6;
+      }
+
+      th.sortable::after {
+        content: "⇅";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.85rem;
+        color: #9ca3af;
+      }
+
+      th.sort-asc::after {
+        content: "↑";
+        color: #4f46e5;
+      }
+
+      th.sort-desc::after {
+        content: "↓";
+        color: #4f46e5;
+      }
+
+      th.sort-asc,
+      th.sort-desc {
+        background: rgba(79, 70, 229, 0.06);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+      }
+
+      th.sort-asc:hover,
+      th.sort-desc:hover {
+        background: rgba(79, 70, 229, 0.08);
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.3);
+      }
+
+      .sort-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+        z-index: 100;
+        min-width: 160px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0.2s;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .sort-dropdown.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0s;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .sort-dropdown button {
+        display: block;
+        width: 100%;
+        padding: 12px 18px;
+        text-align: left;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1f2937;
+        transition: all 0.15s ease;
+        position: relative;
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      .sort-dropdown.show button {
+        animation: slideInButton 0.2s ease forwards;
+      }
+
+      .sort-dropdown.show button:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      .sort-dropdown.show button:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .sort-dropdown.show button:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+
+      @keyframes slideInButton {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .sort-dropdown button:hover {
+        background: #f8fafc;
+        color: #4f46e5;
+      }
+
+      .sort-dropdown button:active {
+        background: #f1f5f9;
+      }
+
+      .sort-dropdown button:first-child {
+        padding-top: 14px;
+      }
+
+      .sort-dropdown button:last-child {
+        padding-bottom: 14px;
+      }
+
+      .sort-dropdown button:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        right: 18px;
+        height: 1px;
+        background: #f1f5f9;
+      }
+
+      .sort-dropdown button[data-sort="clear"] {
+        display: none;
+      }
+
+      .sort-dropdown button[data-sort="clear"].show {
+        display: block;
+      }
+
+      tbody tr:not(.no-animate) {
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInRow 0.4s ease forwards;
+      }
+
+      tbody tr:not(.no-animate):nth-child(1) {
+        animation-delay: 0.05s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(3) {
+        animation-delay: 0.15s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(4) {
+        animation-delay: 0.2s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(5) {
+        animation-delay: 0.25s;
+      }
+
+      tbody tr:not(.no-animate):nth-child(n+6) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes slideInRow {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      tbody tr:hover {
+        background: rgba(99, 102, 241, 0.04);
+      }
+
+      .muted {
+        color: #6b7280;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+
+        header button {
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="../">Kullanıcılar</a>
+          <a href="../support">Destek</a>
+          <a href="../statistics">İstatistikler</a>
+          <a href="../requests" class="active">İstekler</a>
+        </nav>
+      </aside>
+      <div class="content">
+        <header>
+          <h2>İstekler Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Güncelle</button>
+            <button id="sign-out">Çıkış Yap</button>
+          </div>
+        </header>
+        <main>
+          <div id="status" class="status-banner" aria-live="polite">
+            İstekler yükleniyor...
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>İstekler</h2>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="sortable" data-column="user_id">User ID
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="modal">Modal
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="input_tokens_cache_hit">Input Tokens (Cache Hit)
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="input_tokens_cache_miss">Input Tokens (Cache Miss)
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="output_tokens">Output Tokens
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="account_tier">Account Tier
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="user_message">User Message
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="ai_response">AI Response
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="created_at">Created At
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="time">Time (seconds)
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="page">Page
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="agent_flow">Agent Flow
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="conversation_id">Conversation ID
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="requests-table-body">
+                  <tr>
+                    <td colspan="13" class="muted">İstekler yükleniyor…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const requestsTableBody = document.getElementById("requests-table-body");
+      const signOutBtn = document.getElementById("sign-out");
+      const refreshBtn = document.getElementById("refresh");
+
+      // Sorting state
+      let currentSort = { column: null, direction: null };
+
+      // Store all requests data for client-side filtering and sorting
+      let allRequestsData = [];
+      let originalUnsortedData = []; // Store original order from database
+
+      // Initialize sortable headers
+      function initializeSorting() {
+        const sortableHeaders = document.querySelectorAll("th.sortable");
+        let activeDropdown = null;
+
+        sortableHeaders.forEach((header) => {
+          const dropdown = header.querySelector(".sort-dropdown");
+          
+          header.addEventListener("click", (e) => {
+            // Don't toggle if clicking inside dropdown
+            if (e.target.closest(".sort-dropdown")) return;
+
+            // Close other dropdowns
+            if (activeDropdown && activeDropdown !== dropdown) {
+              activeDropdown.classList.remove("show");
+            }
+
+            // Toggle current dropdown
+            dropdown.classList.toggle("show");
+            activeDropdown = dropdown.classList.contains("show") ? dropdown : null;
+          });
+
+          // Handle sort button clicks
+          dropdown.querySelectorAll("button").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const column = header.dataset.column;
+              const direction = button.dataset.sort;
+              
+              // Handle clear sorting
+              if (direction === "clear") {
+                currentSort = { column: null, direction: null };
+                updateSortIndicators(null, null);
+              } else {
+                // Update sort state
+                currentSort = { column, direction };
+                updateSortIndicators(header, direction);
+              }
+              
+              // Close dropdown
+              dropdown.classList.remove("show");
+              activeDropdown = null;
+              
+              // Sort and render data
+              sortAndRenderRequests();
+            });
+          });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest("th.sortable")) {
+            if (activeDropdown) {
+              activeDropdown.classList.remove("show");
+              activeDropdown = null;
+            }
+          }
+        });
+      }
+
+      function updateSortIndicators(activeHeader, direction) {
+        // Remove all sort classes
+        document.querySelectorAll("th.sortable").forEach((th) => {
+          th.classList.remove("sort-asc", "sort-desc");
+        });
+
+        // Hide all clear buttons
+        document.querySelectorAll('button[data-sort="clear"]').forEach((btn) => {
+          btn.classList.remove("show");
+        });
+
+        // Add sort class to active header (if not clearing)
+        if (activeHeader && direction) {
+          if (direction === "asc") {
+            activeHeader.classList.add("sort-asc");
+          } else if (direction === "desc") {
+            activeHeader.classList.add("sort-desc");
+          }
+          
+          // Show clear button only in the active column's dropdown
+          const clearButton = activeHeader.querySelector('button[data-sort="clear"]');
+          if (clearButton) {
+            clearButton.classList.add("show");
+          }
+        }
+      }
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "login.html";
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        refreshDashboard();
+      });
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) {
+          return value;
+        }
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}`;
+      }
+
+      async function ensureSession() {
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
+        if (error || !session) {
+          window.location.href = "login.html";
+          return null;
+        }
+        return session;
+      }
+
+      function sortAndRenderRequests() {
+        // If no sorting is applied, return to original unsorted order
+        if (!currentSort.column || !currentSort.direction || !allRequestsData.length) {
+          renderRequestsTable(originalUnsortedData.length > 0 ? originalUnsortedData : allRequestsData);
+          return;
+        }
+
+        const sortColumn = currentSort.column;
+        const sortDirection = currentSort.direction === "asc" ? 1 : -1;
+
+        let sortedData = [...allRequestsData].sort((a, b) => {
+          let aVal, bVal;
+
+          switch (sortColumn) {
+            case "user_id":
+              aVal = a.user_id || 0;
+              bVal = b.user_id || 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "modal":
+              aVal = a.modal || "";
+              bVal = b.modal || "";
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "input_tokens_cache_hit":
+              aVal = a.input_tokens_cache_hit ?? 0;
+              bVal = b.input_tokens_cache_hit ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "input_tokens_cache_miss":
+              aVal = a.input_tokens_cache_miss ?? 0;
+              bVal = b.input_tokens_cache_miss ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "output_tokens":
+              aVal = a.output_tokens ?? 0;
+              bVal = b.output_tokens ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "account_tier":
+              aVal = a.account_tier || "";
+              bVal = b.account_tier || "";
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "user_message":
+              aVal = a.user_message || "";
+              bVal = b.user_message || "";
+              // Always put empty values last
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1;
+              if (!bVal) return -1;
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "ai_response":
+              aVal = a.ai_response || "";
+              bVal = b.ai_response || "";
+              // Always put empty values last
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1;
+              if (!bVal) return -1;
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "created_at":
+              aVal = a.created_at ? new Date(a.created_at).getTime() : 0;
+              bVal = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return (aVal - bVal) * sortDirection;
+
+            case "time":
+              aVal = a.time ?? 0;
+              bVal = b.time ?? 0;
+              return (Number(aVal) - Number(bVal)) * sortDirection;
+
+            case "page":
+              aVal = a.page || "";
+              bVal = b.page || "";
+              // Always put empty values last
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1;
+              if (!bVal) return -1;
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "agent_flow":
+              aVal = a.agent_flow ? JSON.stringify(a.agent_flow) : "";
+              bVal = b.agent_flow ? JSON.stringify(b.agent_flow) : "";
+              // Always put empty values last
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1;
+              if (!bVal) return -1;
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            case "conversation_id":
+              aVal = a.conversation_id || "";
+              bVal = b.conversation_id || "";
+              // Always put empty values last
+              if (!aVal && !bVal) return 0;
+              if (!aVal) return 1;
+              if (!bVal) return -1;
+              return aVal.localeCompare(bVal) * sortDirection;
+
+            default:
+              return 0;
+          }
+        });
+
+        renderRequestsTable(sortedData);
+      }
+
+      async function loadRequests() {
+        const { data, error } = await supabaseClient
+          .from("requests")
+          .select(
+            `
+            user_id,
+            modal,
+            input_tokens_cache_hit,
+            input_tokens_cache_miss,
+            output_tokens,
+            account_tier,
+            user_message,
+            ai_response,
+            created_at,
+            time,
+            page,
+            agent_flow,
+            conversation_id
+          `
+          )
+          .order("created_at", { ascending: false })
+          .limit(10000);
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          requestsTableBody.innerHTML =
+            '<tr><td colspan="13" class="muted">İstek bulunamadı.</td></tr>';
+          return;
+        }
+
+        // Store data for client-side operations
+        allRequestsData = data;
+        // Store original unsorted order (deep copy)
+        originalUnsortedData = JSON.parse(JSON.stringify(data));
+        sortAndRenderRequests();
+      }
+
+      function renderRequestsTable(requests) {
+        // Use provided requests or fall back to allRequestsData
+        const dataToRender = requests || allRequestsData || [];
+
+        if (!dataToRender || dataToRender.length === 0) {
+          requestsTableBody.innerHTML =
+            '<tr class="no-animate"><td colspan="13" class="muted">İstek bulunamadı.</td></tr>';
+          return;
+        }
+
+        requestsTableBody.innerHTML = dataToRender
+          .map(
+            (req) => {
+              // Truncate long text fields for display
+              const truncateText = (text, maxLength = 50) => {
+                if (!text) return "—";
+                if (text.length <= maxLength) return text;
+                return text.substring(0, maxLength) + "...";
+              };
+
+              const formatAgentFlow = (flow) => {
+                if (!flow) return "—";
+                try {
+                  return JSON.stringify(flow);
+                } catch {
+                  return "—";
+                }
+              };
+
+              return `
+                <tr>
+                  <td>${req.user_id || "—"}</td>
+                  <td>${req.modal || "—"}</td>
+                  <td>${req.input_tokens_cache_hit ?? "—"}</td>
+                  <td>${req.input_tokens_cache_miss ?? "—"}</td>
+                  <td>${req.output_tokens ?? "—"}</td>
+                  <td>${req.account_tier || "—"}</td>
+                  <td title="${req.user_message || ""}">${truncateText(req.user_message || "")}</td>
+                  <td title="${req.ai_response || ""}">${truncateText(req.ai_response || "")}</td>
+                  <td>${formatDate(req.created_at)}</td>
+                  <td>${req.time ?? "—"}</td>
+                  <td>${req.page || "—"}</td>
+                  <td title="${formatAgentFlow(req.agent_flow)}">${truncateText(formatAgentFlow(req.agent_flow), 30)}</td>
+                  <td>${req.conversation_id || "—"}</td>
+                </tr>
+              `;
+            }
+          )
+          .join("");
+      }
+
+      async function refreshDashboard({ skipSessionCheck = false } = {}) {
+        try {
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = "Güncelleniyor...";
+          statusBanner.textContent = "İstekler eşleniyor...";
+
+          if (!skipSessionCheck) {
+            const session = await ensureSession();
+            if (!session) return;
+          }
+
+          await loadRequests();
+          statusBanner.textContent = "İstekler güncellendi.";
+        } catch (error) {
+          console.error("İstekler yüklenemedi:", error);
+          statusBanner.textContent =
+            error.message || "İstekler yüklenemedi.";
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "Güncelle";
+        }
+      }
+
+      async function initialise() {
+        const session = await ensureSession();
+        if (!session) return;
+
+        initializeSorting();
+        await refreshDashboard({ skipSessionCheck: true });
+      }
+
+      initialise();
+    </script>
+  </body>
+</html>
+
