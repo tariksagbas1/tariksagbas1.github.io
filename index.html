@@ -193,7 +193,7 @@
           setStatus("Sign-in successful! Redirecting…", "success");
           console.log("Session access token:", session.access_token);
           setTimeout(() => {
-            window.location.href = "admin";
+            window.location.href = "admin/users";
           }, 800);
         } catch (err) {
           console.error("Supabase sign-in error:", err);

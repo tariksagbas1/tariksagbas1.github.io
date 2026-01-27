@@ -27,13 +27,19 @@
       }
 
       .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 240px;
+        height: 100vh;
         padding: 32px 24px;
         background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
         color: #f9fafb;
         display: flex;
         flex-direction: column;
         gap: 32px;
+        overflow-y: auto;
+        z-index: 100;
       }
 
       .sidebar h1 {
@@ -74,6 +80,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        margin-left: 240px;
       }
 
       header {
@@ -194,11 +201,57 @@
       .panel-header {
         padding: 20px 24px;
         border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: #fff;
       }
 
       .panel-header h2 {
         margin: 0;
         font-size: 1.2rem;
+      }
+
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pagination-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #374151;
+        transition: all 0.2s ease;
+      }
+
+      .pagination-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+      }
+
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+        min-width: 80px;
+        text-align: center;
       }
 
       .table-wrapper {
@@ -231,6 +284,11 @@
         text-align: left;
         font-size: 0.95rem;
         border-bottom: 1px solid #f1f5f9;
+        width: 80px;
+      }
+
+      tbody tr {
+        cursor: pointer;
       }
 
       tbody tr:hover {
@@ -257,16 +315,111 @@
         color: #c2410c;
       }
 
+      .muted {
+        color: #6b7280;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 32px;
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+      }
+
+      .modal-overlay.show .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #111827;
+      }
+
+      .modal-body {
+        display: grid;
+        gap: 20px;
+      }
+
+      .modal-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .modal-field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .modal-field-value {
+        font-size: 0.95rem;
+        color: #111827;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .modal-field-value:empty::before {
+        content: "—";
+        color: #9ca3af;
+      }
+
       @media (max-width: 900px) {
         .layout {
           flex-direction: column;
         }
 
         .sidebar {
+          position: relative;
           width: 100%;
+          height: auto;
           flex-direction: row;
           align-items: center;
           justify-content: space-between;
+        }
+
+        .content {
+          margin-left: 0;
         }
 
         .nav-links {
@@ -292,10 +445,11 @@
       <aside class="sidebar">
         <h1>Admin Center</h1>
         <nav class="nav-links">
-          <a href="../">Kullanıcılar</a>
+          <a href="../users">Kullanıcılar</a>
           <a href="../support" class="active">Destek</a>
           <a href="../statistics">İstatistikler</a>
           <a href="../requests">İstekler</a>
+          <a href="../conversations">Sohbetler</a>
         </nav>
       </aside>
       <div class="content">
@@ -326,19 +480,28 @@
           <section class="panel">
             <div class="panel-header">
               <h2>Destek Talepleri</h2>
+              <div class="pagination-controls">
+                <button id="prev-page" class="pagination-btn" disabled>
+                  <span>←</span>
+                </button>
+                <span id="pagination-info" class="pagination-info">0-0 / 0</span>
+                <button id="next-page" class="pagination-btn">
+                  <span>→</span>
+                </button>
+              </div>
             </div>
             <div class="table-wrapper">
               <table>
                 <thead>
                   <tr>
                     <th>Ticket ID</th>
-                    <th>Subject</th>
-                    <th>Description</th>
-                    <th>Email</th>
-                    <th>User ID</th>
-                    <th>Created</th>
-                    <th>Resolved</th>
-                    <th>Answered</th>
+                    <th>Konu</th>
+                    <th>Açıklama</th>
+                    <th>Eposta</th>
+                    <th>Kullanıcı ID</th>
+                    <th>Oluşturulma Tarihi</th>
+                    <th>Çözüldü</th>
+                    <th>Cevaplandı</th>
                   </tr>
                 </thead>
                 <tbody id="tickets-table-body">
@@ -350,6 +513,18 @@
             </div>
           </section>
         </main>
+      </div>
+    </div>
+
+    <!-- Modal for row details -->
+    <div id="row-modal" class="modal-overlay">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Destek Talebi Detayları</h3>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Content will be populated dynamically -->
+        </div>
       </div>
     </div>
 
@@ -371,13 +546,50 @@
       const signOutBtn = document.getElementById("sign-out");
       const refreshBtn = document.getElementById("refresh");
 
+      // Pagination state
+      let currentPage = 1;
+      const itemsPerPage = 50;
+      let allTicketsData = [];
+      const prevPageBtn = document.getElementById("prev-page");
+      const nextPageBtn = document.getElementById("next-page");
+      const paginationInfo = document.getElementById("pagination-info");
+
       signOutBtn.addEventListener("click", async () => {
         await supabaseClient.auth.signOut();
-        window.location.href = "login.html";
+        window.location.href = "/";
       });
 
       refreshBtn.addEventListener("click", () => {
         refreshDashboard();
+      });
+
+      function updatePaginationControls() {
+        const totalItems = allTicketsData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+
+        paginationInfo.textContent = `${startIndex}-${endIndex} / ${totalItems}`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage >= totalPages || totalPages === 0;
+      }
+
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTicketsTable(allTicketsData);
+          updatePaginationControls();
+        }
+      });
+
+      nextPageBtn.addEventListener("click", () => {
+        const totalPages = Math.ceil(allTicketsData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTicketsTable(allTicketsData);
+          updatePaginationControls();
+        }
       });
 
       function formatDate(value) {
@@ -448,34 +660,88 @@
           `
           )
           .order("created_at", { ascending: false })
-          .limit(300);
+          .limit(10000);
 
         if (error) {
           throw error;
         }
 
         if (!data || data.length === 0) {
-          ticketsTableBody.innerHTML =
-            '<tr><td colspan="8" class="muted">Destek talebi bulunamadı.</td></tr>';
+          allTicketsData = [];
+          renderTicketsTable([]);
           return;
         }
 
-        ticketsTableBody.innerHTML = data
+        // Store all tickets data for pagination
+        allTicketsData = data;
+        currentPage = 1; // Reset to first page when loading new data
+        renderTicketsTable(data);
+        updatePaginationControls();
+      }
+
+      function renderTicketsTable(tickets) {
+        // Store all tickets data for pagination
+        allTicketsData = tickets || [];
+
+        // Apply pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedTickets = allTicketsData.slice(startIndex, endIndex);
+
+        if (!paginatedTickets || paginatedTickets.length === 0) {
+          ticketsTableBody.innerHTML =
+            '<tr class="no-animate"><td colspan="8" class="muted">Destek talebi bulunamadı.</td></tr>';
+          updatePaginationControls();
+          return;
+        }
+
+        ticketsTableBody.innerHTML = paginatedTickets
           .map(
-            (ticket) => `
-              <tr>
-                <td>${ticket.ticket_id}</td>
-                <td>${ticket.subject}</td>
-                <td>${ticket.description}</td>
-                <td>${ticket.email}</td>
-                <td>${ticket.user_id}</td>
-                <td>${formatDate(ticket.created_at)}</td>
-                <td>${renderBadge(ticket.resolved)}</td>
-                <td>${renderBadge(ticket.answered)}</td>
-              </tr>
-            `
+            (ticket) => {
+              // Truncate text to 100 characters
+              const truncateText = (text, maxLength = 80) => {
+                if (!text) return "—";
+                const textStr = String(text);
+                if (textStr.length <= maxLength) return textStr;
+                return textStr.substring(0, maxLength) + "...";
+              };
+
+              // Store full ticket data as JSON in data attribute
+              const ticketDataJson = JSON.stringify(ticket);
+              
+              return `
+                <tr data-ticket='${ticketDataJson.replace(/'/g, "&#39;")}'>
+                  <td>${truncateText(ticket.ticket_id)}</td>
+                  <td>${truncateText(ticket.subject)}</td>
+                  <td>${truncateText(ticket.description)}</td>
+                  <td>${truncateText(ticket.email)}</td>
+                  <td>${truncateText(ticket.user_id)}</td>
+                  <td>${truncateText(formatDate(ticket.created_at))}</td>
+                  <td>${renderBadge(ticket.resolved)}</td>
+                  <td>${renderBadge(ticket.answered)}</td>
+                </tr>
+              `;
+            }
           )
           .join("");
+        
+        // Add click handlers to rows
+        const rows = ticketsTableBody.querySelectorAll("tr[data-ticket]");
+        rows.forEach((row) => {
+          row.addEventListener("click", (e) => {
+            const ticketDataJson = row.getAttribute("data-ticket");
+            if (ticketDataJson) {
+              try {
+                const ticketData = JSON.parse(ticketDataJson);
+                showRowModal(ticketData);
+              } catch (error) {
+                console.error("Error parsing ticket data:", error);
+              }
+            }
+          });
+        });
+        
+        updatePaginationControls();
       }
 
       async function refreshDashboard({ skipSessionCheck = false } = {}) {
@@ -500,6 +766,66 @@
           refreshBtn.textContent = "Güncelle";
         }
       }
+
+      // Modal functions
+      const rowModal = document.getElementById("row-modal");
+      const modalBody = document.getElementById("modal-body");
+
+      function showRowModal(ticketData) {
+        // Format created_at
+        const createdAtDisplay = ticketData.created_at 
+          ? formatDate(ticketData.created_at) 
+          : "—";
+
+        // Build modal content
+        modalBody.innerHTML = `
+          <div class="modal-field">
+            <div class="modal-field-label">Ticket ID</div>
+            <div class="modal-field-value">${ticketData.ticket_id || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Konu</div>
+            <div class="modal-field-value">${ticketData.subject || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Açıklama</div>
+            <div class="modal-field-value">${ticketData.description || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Eposta</div>
+            <div class="modal-field-value">${ticketData.email || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Kullanıcı ID</div>
+            <div class="modal-field-value">${ticketData.user_id || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Oluşturulma Tarihi</div>
+            <div class="modal-field-value">${createdAtDisplay}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Çözüldü</div>
+            <div class="modal-field-value">${ticketData.resolved ? "Evet" : "Hayır"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Cevaplandı</div>
+            <div class="modal-field-value">${ticketData.answered ? "Evet" : "Hayır"}</div>
+          </div>
+        `;
+
+        rowModal.classList.add("show");
+      }
+
+      function closeRowModal() {
+        rowModal.classList.remove("show");
+      }
+
+      // Close modal when clicking outside
+      rowModal.addEventListener("click", (e) => {
+        if (e.target === rowModal) {
+          closeRowModal();
+        }
+      });
 
       async function initialise() {
         const session = await ensureSession();

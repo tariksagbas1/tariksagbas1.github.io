@@ -27,13 +27,19 @@
       }
 
       .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 240px;
+        height: 100vh;
         padding: 32px 24px;
         background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
         color: #f9fafb;
         display: flex;
         flex-direction: column;
         gap: 32px;
+        overflow-y: auto;
+        z-index: 100;
       }
 
       .sidebar h1 {
@@ -74,6 +80,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        margin-left: 240px;
       }
 
       header {
@@ -156,11 +163,57 @@
       .panel-header {
         padding: 20px 24px;
         border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: #fff;
       }
 
       .panel-header h2 {
         margin: 0;
         font-size: 1.2rem;
+      }
+
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pagination-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #374151;
+        transition: all 0.2s ease;
+      }
+
+      .pagination-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+      }
+
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+        min-width: 80px;
+        text-align: center;
       }
 
       .table-wrapper {
@@ -193,7 +246,7 @@
         text-align: center;
         font-size: 0.95rem;
         border-bottom: 1px solid #f1f5f9;
-        min-width: 140px;
+        width: 80px;
       }
 
       th {
@@ -386,6 +439,10 @@
         }
       }
 
+      tbody tr {
+        cursor: pointer;
+      }
+
       tbody tr:hover {
         background: rgba(99, 102, 241, 0.04);
       }
@@ -394,16 +451,238 @@
         color: #6b7280;
       }
 
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 32px;
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+      }
+
+      .modal-overlay.show .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #111827;
+      }
+
+      .modal-body {
+        display: grid;
+        gap: 20px;
+      }
+
+      .modal-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .modal-field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .modal-field-value {
+        font-size: 0.95rem;
+        color: #111827;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .modal-field-value:empty::before {
+        content: "—";
+        color: #9ca3af;
+      }
+
+      .modal-field-value.markdown {
+        white-space: normal;
+      }
+
+      .modal-field-value.markdown h1,
+      .modal-field-value.markdown h2,
+      .modal-field-value.markdown h3,
+      .modal-field-value.markdown h4,
+      .modal-field-value.markdown h5,
+      .modal-field-value.markdown h6 {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+      }
+
+      .modal-field-value.markdown h1 {
+        font-size: 1.5em;
+      }
+
+      .modal-field-value.markdown h2 {
+        font-size: 1.3em;
+      }
+
+      .modal-field-value.markdown h3 {
+        font-size: 1.1em;
+      }
+
+      .modal-field-value.markdown p {
+        margin: 0.5em 0;
+      }
+
+      .modal-field-value.markdown ul,
+      .modal-field-value.markdown ol {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+      }
+
+      .modal-field-value.markdown li {
+        margin: 0.25em 0;
+      }
+
+      .modal-field-value.markdown code {
+        background: #e5e7eb;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .modal-field-value.markdown pre {
+        background: #1f2937;
+        color: #f9fafb;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0.5em 0;
+      }
+
+      .modal-field-value.markdown pre code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+      }
+
+      .modal-field-value.markdown blockquote {
+        border-left: 4px solid #6366f1;
+        padding-left: 1em;
+        margin: 0.5em 0;
+        color: #6b7280;
+      }
+
+      .modal-field-value.markdown a {
+        color: #6366f1;
+        text-decoration: none;
+      }
+
+      .modal-field-value.markdown a:hover {
+        text-decoration: underline;
+      }
+
+      .modal-field-value.markdown strong {
+        font-weight: 600;
+      }
+
+      .modal-field-value.markdown em {
+        font-style: italic;
+      }
+
+      .upper-header {
+        text-align: center;
+        border-style: solid;
+        border-color: #e5e7eb;
+        border-radius: 10px;
+        padding: 10px;
+        margin: 10px;
+        background-color: #f9fafb;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #1f2937;
+      }
+
+      #tokens-view-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 12px;
+        margin-left: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        text-decoration: none;
+        opacity: 1;
+      }
+
+      #tokens-view-toggle:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #tokens-view-toggle:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+      }
+
       @media (max-width: 900px) {
         .layout {
           flex-direction: column;
         }
 
         .sidebar {
+          position: relative;
           width: 100%;
+          height: auto;
           flex-direction: row;
           align-items: center;
           justify-content: space-between;
+        }
+
+        .content {
+          margin-left: 0;
         }
 
         .nav-links {
@@ -429,10 +708,11 @@
       <aside class="sidebar">
         <h1>Admin Center</h1>
         <nav class="nav-links">
-          <a href="../">Kullanıcılar</a>
+          <a href="../users">Kullanıcılar</a>
           <a href="../support">Destek</a>
           <a href="../statistics">İstatistikler</a>
           <a href="../requests" class="active">İstekler</a>
+          <a href="../conversations">Sohbetler</a>
         </nav>
       </aside>
       <div class="content">
@@ -451,96 +731,123 @@
           <section class="panel">
             <div class="panel-header">
               <h2>İstekler</h2>
+              <div class="pagination-controls">
+                <button id="prev-page" class="pagination-btn" disabled>
+                  <span>←</span>
+                </button>
+                <span id="pagination-info" class="pagination-info">0-0 / 0</span>
+                <button id="next-page" class="pagination-btn">
+                  <span>→</span>
+                </button>
+              </div>
             </div>
             <div class="table-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th class="sortable" data-column="user_id">User ID
+                    <th class="upper-header" colspan="2"></th>
+                    <th class="upper-header" id="tokens-header" colspan="1" style="position: relative;">
+                      <span>Toplam Token</span>
+                      <button id="tokens-view-toggle" type="button">Ayır</button>
+                    </th>
+                    <th class="upper-header" id="input-cache-hit-header" style="display: none;">Input (Cache Hit)</th>
+                    <th class="upper-header" id="input-cache-miss-header" style="display: none;">Input (Cache Miss)</th>
+                    <th class="upper-header" id="output-tokens-header" style="display: none;">Output</th>
+                    <th class="upper-header" colspan="8"></th>
+                  </tr>
+                  <tr>
+                    <th class="sortable" data-column="user_id">Kullanıcı ID
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="modal">Modal
+                    <th class="sortable" data-column="modal">Model
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="input_tokens_cache_hit">Input Tokens (Cache Hit)
+                    <th class="sortable" id="total-tokens-header" data-column="total_tokens">Toplam Token
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="input_tokens_cache_miss">Input Tokens (Cache Miss)
+                    <th class="sortable" id="input-cache-hit-col-header" style="display: none;" data-column="input_tokens_cache_hit">Input (Cache Hit)
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="output_tokens">Output Tokens
+                    <th class="sortable" id="input-cache-miss-col-header" style="display: none;" data-column="input_tokens_cache_miss">Input (Cache Miss)
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="account_tier">Account Tier
+                    <th class="sortable" id="output-tokens-col-header" style="display: none;" data-column="output_tokens">Output
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="user_message">User Message
+                    <th class="sortable" data-column="account_tier">Hesap Türü
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="ai_response">AI Response
+                    <th class="sortable" data-column="user_message">Kullanıcı Mesajı
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="created_at">Created At
+                    <th class="sortable" data-column="ai_response">Yapay Zeka Cevabı
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="time">Time (seconds)
+                    <th class="sortable" data-column="created_at">Oluşturulma Tarihi
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="page">Page
+                    <th class="sortable" data-column="time">Süre (saniye)
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="agent_flow">Agent Flow
+                    <th class="sortable" data-column="page">Sayfa
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="conversation_id">Conversation ID
+                    <th class="sortable" data-column="agent_flow">Agent Akışı
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="conversation_id">Konuşma ID
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
@@ -551,7 +858,7 @@
                 </thead>
                 <tbody id="requests-table-body">
                   <tr>
-                    <td colspan="13" class="muted">İstekler yükleniyor…</td>
+                    <td colspan="11" class="muted">İstekler yükleniyor…</td>
                   </tr>
                 </tbody>
               </table>
@@ -561,7 +868,20 @@
       </div>
     </div>
 
+    <!-- Modal for row details -->
+    <div id="row-modal" class="modal-overlay">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>İstek Detayları</h3>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Content will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
     <script>
       const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
       const SUPABASE_ANON_KEY =
@@ -578,9 +898,60 @@
       // Sorting state
       let currentSort = { column: null, direction: null };
 
+      // Tokens view state (true = combined, false = split)
+      let tokensViewCombined = true;
+      const tokensViewToggle = document.getElementById("tokens-view-toggle");
+      const tokensHeader = document.getElementById("tokens-header");
+      const totalTokensHeader = document.getElementById("total-tokens-header");
+      const inputCacheHitHeader = document.getElementById("input-cache-hit-header");
+      const inputCacheMissHeader = document.getElementById("input-cache-miss-header");
+      const outputTokensHeader = document.getElementById("output-tokens-header");
+      const inputCacheHitColHeader = document.getElementById("input-cache-hit-col-header");
+      const inputCacheMissColHeader = document.getElementById("input-cache-miss-col-header");
+      const outputTokensColHeader = document.getElementById("output-tokens-col-header");
+
       // Store all requests data for client-side filtering and sorting
       let allRequestsData = [];
       let originalUnsortedData = []; // Store original order from database
+
+      // Pagination state
+      let currentPage = 1;
+      const itemsPerPage = 50;
+      const prevPageBtn = document.getElementById("prev-page");
+      const nextPageBtn = document.getElementById("next-page");
+      const paginationInfo = document.getElementById("pagination-info");
+
+      tokensViewToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        tokensViewCombined = !tokensViewCombined;
+        updateTokensView();
+        currentPage = 1; // Reset to first page when toggling view
+        sortAndRenderRequests();
+      });
+
+      function updateTokensView() {
+        if (tokensViewCombined) {
+          tokensHeader.colSpan = 1;
+          inputCacheHitHeader.style.display = "none";
+          inputCacheMissHeader.style.display = "none";
+          outputTokensHeader.style.display = "none";
+          inputCacheHitColHeader.style.display = "none";
+          inputCacheMissColHeader.style.display = "none";
+          outputTokensColHeader.style.display = "none";
+          totalTokensHeader.style.display = "";
+          tokensViewToggle.textContent = "Ayır";
+        } else {
+          tokensHeader.colSpan = 3;
+          inputCacheHitHeader.style.display = "";
+          inputCacheMissHeader.style.display = "";
+          outputTokensHeader.style.display = "";
+          inputCacheHitColHeader.style.display = "";
+          inputCacheMissColHeader.style.display = "";
+          outputTokensColHeader.style.display = "";
+          totalTokensHeader.style.display = "none";
+          tokensViewToggle.textContent = "Birleştir";
+        }
+      }
 
       // Initialize sortable headers
       function initializeSorting() {
@@ -620,6 +991,9 @@
                 currentSort = { column, direction };
                 updateSortIndicators(header, direction);
               }
+              
+              // Reset to first page when sorting changes
+              currentPage = 1;
               
               // Close dropdown
               dropdown.classList.remove("show");
@@ -671,11 +1045,40 @@
 
       signOutBtn.addEventListener("click", async () => {
         await supabaseClient.auth.signOut();
-        window.location.href = "login.html";
+        window.location.href = "/";
       });
 
       refreshBtn.addEventListener("click", () => {
         refreshDashboard();
+      });
+
+      function updatePaginationControls() {
+        const totalItems = allRequestsData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+
+        paginationInfo.textContent = `${startIndex}-${endIndex} / ${totalItems}`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage >= totalPages || totalPages === 0;
+      }
+
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          sortAndRenderRequests();
+          updatePaginationControls();
+        }
+      });
+
+      nextPageBtn.addEventListener("click", () => {
+        const totalPages = Math.ceil(allRequestsData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          sortAndRenderRequests();
+          updatePaginationControls();
+        }
       });
 
       function formatDate(value) {
@@ -726,6 +1129,11 @@
               aVal = a.modal || "";
               bVal = b.modal || "";
               return aVal.localeCompare(bVal) * sortDirection;
+
+            case "total_tokens":
+              aVal = (a.input_tokens_cache_hit || 0) + (a.input_tokens_cache_miss || 0) + (a.output_tokens || 0);
+              bVal = (b.input_tokens_cache_hit || 0) + (b.input_tokens_cache_miss || 0) + (b.output_tokens || 0);
+              return (Number(aVal) - Number(bVal)) * sortDirection;
 
             case "input_tokens_cache_hit":
               aVal = a.input_tokens_cache_hit ?? 0;
@@ -830,16 +1238,16 @@
             conversation_id
           `
           )
-          .order("created_at", { ascending: false })
-          .limit(10000);
+          .order("created_at", { ascending: false });
 
         if (error) {
           throw error;
         }
 
         if (!data || data.length === 0) {
+          const colspan = tokensViewCombined ? 11 : 13;
           requestsTableBody.innerHTML =
-            '<tr><td colspan="13" class="muted">İstek bulunamadı.</td></tr>';
+            `<tr><td colspan="${colspan}" class="muted">İstek bulunamadı.</td></tr>`;
           return;
         }
 
@@ -847,7 +1255,9 @@
         allRequestsData = data;
         // Store original unsorted order (deep copy)
         originalUnsortedData = JSON.parse(JSON.stringify(data));
+        currentPage = 1; // Reset to first page when loading new data
         sortAndRenderRequests();
+        updatePaginationControls();
       }
 
       function renderRequestsTable(requests) {
@@ -855,12 +1265,27 @@
         const dataToRender = requests || allRequestsData || [];
 
         if (!dataToRender || dataToRender.length === 0) {
+          const colspan = tokensViewCombined ? 11 : 13;
           requestsTableBody.innerHTML =
-            '<tr class="no-animate"><td colspan="13" class="muted">İstek bulunamadı.</td></tr>';
+            `<tr class="no-animate"><td colspan="${colspan}" class="muted">İstek bulunamadı.</td></tr>`;
+          updatePaginationControls();
           return;
         }
 
-        requestsTableBody.innerHTML = dataToRender
+        // Apply pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedRequests = dataToRender.slice(startIndex, endIndex);
+
+        if (!paginatedRequests || paginatedRequests.length === 0) {
+          const colspan = tokensViewCombined ? 11 : 13;
+          requestsTableBody.innerHTML =
+            `<tr class="no-animate"><td colspan="${colspan}" class="muted">İstek bulunamadı.</td></tr>`;
+          updatePaginationControls();
+          return;
+        }
+
+        requestsTableBody.innerHTML = paginatedRequests
           .map(
             (req) => {
               // Truncate long text fields for display
@@ -879,13 +1304,21 @@
                 }
               };
 
+              const totalTokens = (req.input_tokens_cache_hit || 0) + (req.input_tokens_cache_miss || 0) + (req.output_tokens || 0);
+
+              // Store full request data as JSON in data attribute
+              const requestDataJson = JSON.stringify(req);
+
               return `
-                <tr>
+                <tr data-request='${requestDataJson.replace(/'/g, "&#39;")}'>
                   <td>${req.user_id || "—"}</td>
                   <td>${req.modal || "—"}</td>
-                  <td>${req.input_tokens_cache_hit ?? "—"}</td>
-                  <td>${req.input_tokens_cache_miss ?? "—"}</td>
-                  <td>${req.output_tokens ?? "—"}</td>
+                  ${tokensViewCombined 
+                    ? `<td>${totalTokens}</td>`
+                    : `<td>${req.input_tokens_cache_hit ?? "—"}</td>
+                       <td>${req.input_tokens_cache_miss ?? "—"}</td>
+                       <td>${req.output_tokens ?? "—"}</td>`
+                  }
                   <td>${req.account_tier || "—"}</td>
                   <td title="${req.user_message || ""}">${truncateText(req.user_message || "")}</td>
                   <td title="${req.ai_response || ""}">${truncateText(req.ai_response || "")}</td>
@@ -899,6 +1332,28 @@
             }
           )
           .join("");
+        
+        // Add click handlers to rows
+        const rows = requestsTableBody.querySelectorAll("tr[data-request]");
+        rows.forEach((row) => {
+          row.addEventListener("click", (e) => {
+            // Don't open modal if clicking on sortable headers or other interactive elements
+            if (e.target.closest("th.sortable") || e.target.closest(".sort-dropdown")) {
+              return;
+            }
+            const requestDataJson = row.getAttribute("data-request");
+            if (requestDataJson) {
+              try {
+                const requestData = JSON.parse(requestDataJson);
+                showRowModal(requestData);
+              } catch (error) {
+                console.error("Error parsing request data:", error);
+              }
+            }
+          });
+        });
+        
+        updatePaginationControls();
       }
 
       async function refreshDashboard({ skipSessionCheck = false } = {}) {
@@ -924,10 +1379,110 @@
         }
       }
 
+      // Modal functions
+      const rowModal = document.getElementById("row-modal");
+      const modalBody = document.getElementById("modal-body");
+
+      function showRowModal(requestData) {
+        // Format agent_flow if it exists
+        let agentFlowDisplay = "—";
+        if (requestData.agent_flow) {
+          try {
+            agentFlowDisplay = JSON.stringify(requestData.agent_flow, null, 2);
+          } catch {
+            agentFlowDisplay = String(requestData.agent_flow);
+          }
+        }
+
+        // Calculate total tokens
+        const totalTokens = (requestData.input_tokens_cache_hit || 0) + 
+                           (requestData.input_tokens_cache_miss || 0) + 
+                           (requestData.output_tokens || 0);
+
+        // Format created_at
+        const createdAtDisplay = requestData.created_at 
+          ? formatDate(requestData.created_at) 
+          : "—";
+
+        // Build modal content
+        modalBody.innerHTML = `
+          <div class="modal-field">
+            <div class="modal-field-label">Kullanıcı ID</div>
+            <div class="modal-field-value">${requestData.user_id || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Modal</div>
+            <div class="modal-field-value">${requestData.modal || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Input Tokens (Cache Hit)</div>
+            <div class="modal-field-value">${requestData.input_tokens_cache_hit ?? "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Input Tokens (Cache Miss)</div>
+            <div class="modal-field-value">${requestData.input_tokens_cache_miss ?? "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Output Tokens</div>
+            <div class="modal-field-value">${requestData.output_tokens ?? "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Toplam Token</div>
+            <div class="modal-field-value">${totalTokens}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Account Tier</div>
+            <div class="modal-field-value">${requestData.account_tier || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">User Message</div>
+            <div class="modal-field-value">${requestData.user_message || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">AI Response</div>
+            <div class="modal-field-value markdown">${requestData.ai_response ? (window.marked ? window.marked.parse(requestData.ai_response) : requestData.ai_response) : "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Created At</div>
+            <div class="modal-field-value">${createdAtDisplay}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Time (seconds)</div>
+            <div class="modal-field-value">${requestData.time ?? "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Page</div>
+            <div class="modal-field-value">${requestData.page || "—"}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Agent Flow</div>
+            <div class="modal-field-value">${agentFlowDisplay}</div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Conversation ID</div>
+            <div class="modal-field-value">${requestData.conversation_id || "—"}</div>
+          </div>
+        `;
+
+        rowModal.classList.add("show");
+      }
+
+      function closeRowModal() {
+        rowModal.classList.remove("show");
+      }
+
+      // Close modal when clicking outside
+      rowModal.addEventListener("click", (e) => {
+        if (e.target === rowModal) {
+          closeRowModal();
+        }
+      });
+
       async function initialise() {
         const session = await ensureSession();
         if (!session) return;
 
+        updateTokensView();
         initializeSorting();
         await refreshDashboard({ skipSessionCheck: true });
       }

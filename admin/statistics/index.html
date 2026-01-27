@@ -27,13 +27,19 @@
       }
 
       .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 240px;
+        height: 100vh;
         padding: 32px 24px;
         background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
         color: #f9fafb;
         display: flex;
         flex-direction: column;
         gap: 32px;
+        overflow-y: auto;
+        z-index: 100;
       }
 
       .sidebar h1 {
@@ -74,6 +80,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        margin-left: 240px;
       }
 
       header {
@@ -156,11 +163,57 @@
       .panel-header {
         padding: 20px 24px;
         border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: #fff;
       }
 
       .panel-header h2 {
         margin: 0;
         font-size: 1.2rem;
+      }
+
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pagination-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #374151;
+        transition: all 0.2s ease;
+      }
+
+      .pagination-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+      }
+
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+        min-width: 80px;
+        text-align: center;
       }
 
       .table-wrapper {
@@ -444,10 +497,16 @@
         }
 
         .sidebar {
+          position: relative;
           width: 100%;
+          height: auto;
           flex-direction: row;
           align-items: center;
           justify-content: space-between;
+        }
+
+        .content {
+          margin-left: 0;
         }
 
         .nav-links {
@@ -473,10 +532,11 @@
       <aside class="sidebar">
         <h1>Admin Center</h1>
         <nav class="nav-links">
-          <a href="../">Kullanıcılar</a>
+          <a href="../users">Kullanıcılar</a>
           <a href="../support">Destek</a>
           <a href="../statistics" class="active">İstatistikler</a>
           <a href="../requests">İstekler</a>
+          <a href="../conversations">Sohbetler</a>
         </nav>
       </aside>
       <div class="content">
@@ -495,6 +555,15 @@
           <section class="panel">
             <div class="panel-header">
               <h2>Kullanıcı İstatistikleri</h2>
+              <div class="pagination-controls">
+                <button id="prev-page" class="pagination-btn" disabled>
+                  <span>←</span>
+                </button>
+                <span id="pagination-info" class="pagination-info">0-0 / 0</span>
+                <button id="next-page" class="pagination-btn">
+                  <span>→</span>
+                </button>
+              </div>
             </div>
             <div class="table-wrapper">
               <table>
@@ -510,14 +579,7 @@
                     <th class="upper-header" colspan="1"></th>
                   </tr>
                   <tr>
-                    <th class="sortable" data-column="user_id">ID
-                      <div class="sort-dropdown">
-                        <button data-sort="asc">Artan Sıralama</button>
-                        <button data-sort="desc">Azalan Sıralama</button>
-                        <button data-sort="clear">Sıralamayı Kaldır</button>
-                      </div>
-                    </th>
-                    <th class="sortable" data-column="total_sessions">Toplam
+                    <th class="sortable" data-column="user_id">Kullanıcı ID
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
@@ -531,7 +593,14 @@
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="binary_version">Binary Version
+                    <th class="sortable" data-column="total_sessions">Toplam
+                      <div class="sort-dropdown">
+                        <button data-sort="asc">Artan Sıralama</button>
+                        <button data-sort="desc">Azalan Sıralama</button>
+                        <button data-sort="clear">Sıralamayı Kaldır</button>
+                      </div>
+                    </th>
+                    <th class="sortable" data-column="binary_version">Uygulama Versiyonu
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
@@ -566,7 +635,7 @@
                         <button data-sort="clear">Sıralamayı Kaldır</button>
                       </div>
                     </th>
-                    <th class="sortable" data-column="device_model">Device Model
+                    <th class="sortable" data-column="device_model">Cihaz Modeli
                       <div class="sort-dropdown">
                         <button data-sort="asc">Artan Sıralama</button>
                         <button data-sort="desc">Azalan Sıralama</button>
@@ -616,10 +685,18 @@
       let allStatisticsData = [];
       let originalUnsortedData = []; // Store original order from database
 
+      // Pagination state
+      let currentPage = 1;
+      const itemsPerPage = 50;
+      const prevPageBtn = document.getElementById("prev-page");
+      const nextPageBtn = document.getElementById("next-page");
+      const paginationInfo = document.getElementById("pagination-info");
+
       daysViewToggle.addEventListener("click", (e) => {
         e.stopPropagation();
         daysViewCombined = !daysViewCombined;
         updateDaysView();
+        currentPage = 1; // Reset to first page when toggling view
         sortAndRenderStatistics();
       });
 
@@ -661,6 +738,9 @@
                 currentSort = { column, direction };
                 updateSortIndicators(header, direction);
               }
+              
+              // Reset to first page when sorting changes
+              currentPage = 1;
               
               // Close dropdown
               dropdown.classList.remove("show");
@@ -731,16 +811,15 @@
       }
 
       function sortAndRenderStatistics() {
-        // If no sorting is applied, return to original unsorted order
+        // Determine which data to use
+        let dataToSort;
         if (!currentSort.column || !currentSort.direction || !allStatisticsData.length) {
-          renderStatisticsTable(originalUnsortedData.length > 0 ? originalUnsortedData : allStatisticsData);
-          return;
-        }
+          dataToSort = originalUnsortedData.length > 0 ? originalUnsortedData : allStatisticsData;
+        } else {
+          const sortColumn = currentSort.column;
+          const sortDirection = currentSort.direction === "asc" ? 1 : -1;
 
-        const sortColumn = currentSort.column;
-        const sortDirection = currentSort.direction === "asc" ? 1 : -1;
-
-        let sortedData = [...allStatisticsData].sort((a, b) => {
+          dataToSort = [...allStatisticsData].sort((a, b) => {
           let aVal, bVal;
 
           switch (sortColumn) {
@@ -805,9 +884,10 @@
             default:
               return 0;
           }
-        });
+          });
+        }
 
-        renderStatisticsTable(sortedData);
+        renderStatisticsTable(dataToSort);
       }
 
       function updateDaysView() {
@@ -828,11 +908,40 @@
 
       signOutBtn.addEventListener("click", async () => {
         await supabaseClient.auth.signOut();
-        window.location.href = "login.html";
+        window.location.href = "/";
       });
 
       refreshBtn.addEventListener("click", () => {
         refreshDashboard();
+      });
+
+      function updatePaginationControls() {
+        const totalItems = allStatisticsData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+
+        paginationInfo.textContent = `${startIndex}-${endIndex} / ${totalItems}`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage >= totalPages || totalPages === 0;
+      }
+
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          sortAndRenderStatistics();
+          updatePaginationControls();
+        }
+      });
+
+      nextPageBtn.addEventListener("click", () => {
+        const totalPages = Math.ceil(allStatisticsData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          sortAndRenderStatistics();
+          updatePaginationControls();
+        }
       });
 
       async function ensureSession() {
@@ -880,7 +989,9 @@
         allStatisticsData = data;
         // Store original unsorted order (deep copy)
         originalUnsortedData = JSON.parse(JSON.stringify(data));
+        currentPage = 1; // Reset to first page when loading new data
         sortAndRenderStatistics();
+        updatePaginationControls();
       }
 
       function renderStatisticsTable(statistics) {
@@ -891,9 +1002,24 @@
           const colspan = daysViewCombined ? 7 : 8;
           statisticsTableBody.innerHTML =
             `<tr class="no-animate"><td colspan="${colspan}" class="muted">İstatistik bulunamadı.</td></tr>`;
+          updatePaginationControls();
           return;
         }
-        statisticsTableBody.innerHTML = dataToRender
+
+        // Apply pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedStatistics = dataToRender.slice(startIndex, endIndex);
+
+        if (!paginatedStatistics || paginatedStatistics.length === 0) {
+          const colspan = daysViewCombined ? 7 : 8;
+          statisticsTableBody.innerHTML =
+            `<tr class="no-animate"><td colspan="${colspan}" class="muted">İstatistik bulunamadı.</td></tr>`;
+          updatePaginationControls();
+          return;
+        }
+
+        statisticsTableBody.innerHTML = paginatedStatistics
           .map(
             (stat) => {
               const os = stat.users?.os || "";
@@ -918,6 +1044,8 @@
             }
           )
           .join("");
+        
+        updatePaginationControls();
       }
 
       async function refreshDashboard({ skipSessionCheck = false } = {}) {

@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sohbetler Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px;
+        height: 100vh;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        overflow-y: auto;
+        z-index: 100;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin-left: 240px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      main {
+        padding: 32px;
+        max-width: 100%;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .panel-body {
+        padding: 24px;
+        text-align: center;
+        color: #6b7280;
+      }
+
+      .conversations-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        padding: 24px;
+      }
+
+      .conversation-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        display: grid;
+        gap: 10px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .conversation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
+      }
+
+      .conversation-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .conversation-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #111827;
+        word-break: break-all;
+      }
+
+      .conversation-count {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .conversation-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+
+      .conversation-last-used {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 4px;
+      }
+
+      .empty-state {
+        padding: 48px 24px;
+        text-align: center;
+        color: #6b7280;
+      }
+
+      .conversation-card {
+        cursor: pointer;
+      }
+
+      body.modal-open {
+        overflow: hidden;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 900px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+      }
+
+      .modal-overlay.show .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #111827;
+      }
+
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .message {
+        display: flex;
+        gap: 12px;
+        max-width: 75%;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.user {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+
+      .message.ai {
+        align-self: flex-start;
+      }
+
+      .message-bubble {
+        padding: 12px 16px;
+        border-radius: 18px;
+        word-wrap: break-word;
+        line-height: 1.5;
+        position: relative;
+      }
+
+      .message.user .message-bubble {
+        background: #6366f1;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+      }
+
+      .message.ai .message-bubble {
+        background: #fff;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 4px;
+      }
+
+      .message-content {
+        font-size: 0.95rem;
+      }
+
+      .message.ai .message-content {
+        white-space: normal;
+      }
+
+      .message.ai .message-content h1,
+      .message.ai .message-content h2,
+      .message.ai .message-content h3,
+      .message.ai .message-content h4,
+      .message.ai .message-content h5,
+      .message.ai .message-content h6 {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+      }
+
+      .message.ai .message-content h1 {
+        font-size: 1.3em;
+      }
+
+      .message.ai .message-content h2 {
+        font-size: 1.2em;
+      }
+
+      .message.ai .message-content h3 {
+        font-size: 1.1em;
+      }
+
+      .message.ai .message-content p {
+        margin: 0.5em 0;
+      }
+
+      .message.ai .message-content p:first-child {
+        margin-top: 0;
+      }
+
+      .message.ai .message-content p:last-child {
+        margin-bottom: 0;
+      }
+
+      .message.ai .message-content ul,
+      .message.ai .message-content ol {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+      }
+
+      .message.ai .message-content li {
+        margin: 0.25em 0;
+      }
+
+      .message.ai .message-content code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .message.ai .message-content pre {
+        background: #1f2937;
+        color: #f9fafb;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0.5em 0;
+      }
+
+      .message.ai .message-content pre code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+      }
+
+      .message.ai .message-content blockquote {
+        border-left: 4px solid #6366f1;
+        padding-left: 1em;
+        margin: 0.5em 0;
+        color: #6b7280;
+      }
+
+      .message.ai .message-content a {
+        color: #6366f1;
+        text-decoration: none;
+      }
+
+      .message.ai .message-content a:hover {
+        text-decoration: underline;
+      }
+
+      .message.ai .message-content strong {
+        font-weight: 600;
+      }
+
+      .message.ai .message-content em {
+        font-style: italic;
+      }
+
+      .message-timestamp {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 6px;
+        text-align: right;
+        padding-top: 4px;
+      }
+
+      .message.ai .message-timestamp {
+        color: #6b7280;
+      }
+
+      .filters-container {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 16px;
+        align-items: end;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-group label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .filter-group input {
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .filter-group input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .search-btn {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #6366f1;
+        color: #fff;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .search-btn:hover {
+        background: #4f46e5;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+
+      .search-btn:active {
+        transform: translateY(1px);
+      }
+
+      #conversation-id-filter {
+        background-color: rgb(255, 254, 255);
+        color: rgb(59, 59, 59);
+      }
+
+      #user-id-filter {
+        background-color: rgb(255, 254, 255);
+        color: rgb(59, 59, 59);
+      }
+
+      @media (max-width: 1400px) {
+        .conversations-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (max-width: 1000px) {
+        .conversations-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          position: relative;
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .content {
+          margin-left: 0;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+
+        header button {
+          width: auto;
+        }
+
+        .filters-container {
+          grid-template-columns: 1fr;
+        }
+
+        .conversations-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="../users">Kullanıcılar</a>
+          <a href="../support">Destek</a>
+          <a href="../statistics">İstatistikler</a>
+          <a href="../requests">İstekler</a>
+          <a href="../conversations" class="active">Sohbetler</a>
+        </nav>
+      </aside>
+      <div class="content">
+        <header>
+          <h2>Sohbetler Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Güncelle</button>
+            <button id="sign-out">Çıkış Yap</button>
+          </div>
+        </header>
+        <main>
+          <div id="status" class="status-banner" aria-live="polite">
+            Sohbet Araması Yapınız
+          </div>
+
+          <div class="filters-container">
+            <div class="filter-group">
+              <label for="conversation-id-filter">Conversation ID</label>
+              <input type="text" id="conversation-id-filter" placeholder="Örn: 182u381u23" />
+            </div>
+            <div class="filter-group">
+              <label for="user-id-filter">User ID</label>
+              <input type="text" id="user-id-filter" placeholder="Örn: 123" />
+            </div>
+            <button id="search-btn" class="search-btn">Ara</button>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Sohbetler</h2>
+            </div>
+            <div id="conversations-container" class="conversations-grid">
+              <div class="empty-state">
+                <p>Arama yapmak için filtreleri kullanın.</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <!-- Modal for conversation view -->
+    <div id="conversation-modal" class="modal-overlay">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Mesajlar</h3>
+        </div>
+        <div class="modal-body" id="conversation-modal-body">
+          <!-- Messages will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const conversationIdFilter = document.getElementById("conversation-id-filter");
+      const userIdFilter = document.getElementById("user-id-filter");
+      const searchBtn = document.getElementById("search-btn");
+      const signOutBtn = document.getElementById("sign-out");
+      const refreshBtn = document.getElementById("refresh");
+      const conversationsContainer = document.getElementById("conversations-container");
+      const conversationModal = document.getElementById("conversation-modal");
+      const conversationModalBody = document.getElementById("conversation-modal-body");
+
+      // Read URL parameters on page load
+      function readURLParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const conversationId = urlParams.get("conversation_id");
+        const userId = urlParams.get("user_id");
+
+        if (conversationId) {
+          conversationIdFilter.value = conversationId;
+        }
+        if (userId) {
+          userIdFilter.value = userId;
+        }
+
+        // If URL parameters exist, trigger search automatically
+        if (conversationId || userId) {
+          performSearch();
+        }
+      }
+
+      // Group conversations according to the specified logic
+      function groupConversations(data) {
+        if (!data || data.length === 0) {
+          return [];
+        }
+
+        const groupedConversations = [];
+
+        // Separate rows with and without conversation_id
+        const withConversationId = data.filter(row => row.conversation_id && row.conversation_id.trim() !== "");
+        const withoutConversationId = data.filter(row => !row.conversation_id || row.conversation_id.trim() === "");
+
+        // Group 1: Rows WITH conversation_id
+        // Group by conversation_id, sort each group by created_at descending
+        const conversationIdGroups = {};
+        withConversationId.forEach(row => {
+          const convId = row.conversation_id;
+          if (!conversationIdGroups[convId]) {
+            conversationIdGroups[convId] = [];
+          }
+          conversationIdGroups[convId].push(row);
+        });
+
+        // Sort each group by created_at descending (newest first)
+        Object.keys(conversationIdGroups).forEach(convId => {
+          conversationIdGroups[convId].sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return dateB - dateA; // Descending
+          });
+          groupedConversations.push({
+            user_id: conversationIdGroups[convId][0].user_id,
+            conversation_id: convId,
+            messages: conversationIdGroups[convId]
+          });
+        });
+
+        // Group 2: Rows WITHOUT conversation_id
+        // First group by user_id
+        const userIdGroups = {};
+        withoutConversationId.forEach(row => {
+          const uid = row.user_id;
+          if (!userIdGroups[uid]) {
+            userIdGroups[uid] = [];
+          }
+          userIdGroups[uid].push(row);
+        });
+
+        // For each user_id group:
+        Object.keys(userIdGroups).forEach(uid => {
+          // Sort by created_at ascending (oldest first)
+          const userMessages = userIdGroups[uid].sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return dateA - dateB; // Ascending
+          });
+
+          // Find split points (time = 0 AND ai_response = "clear conversation history")
+          const splitIndices = [];
+          userMessages.forEach((msg, index) => {
+            if (msg.time === 0 && msg.ai_response === "clear conversation history") {
+              splitIndices.push(index);
+            }
+          });
+
+          // Create conversation groups by splitting at these indices
+          if (splitIndices.length === 0) {
+            // No splits, entire array is one conversation
+            groupedConversations.push({
+              user_id: uid,
+              conversation_id: null,
+              messages: userMessages
+            });
+          } else {
+            // Split the array
+            let startIndex = 0;
+            splitIndices.forEach(splitIndex => {
+              // Create group from startIndex to splitIndex (excluding splitIndex)
+              if (startIndex < splitIndex) {
+                const conversationGroup = userMessages.slice(startIndex, splitIndex);
+                groupedConversations.push({
+                  user_id: uid,
+                  conversation_id: null,
+                  messages: conversationGroup
+                });
+              }
+              // Move startIndex to after the split message
+              startIndex = splitIndex + 1;
+            });
+
+            // Add remaining messages after last split
+            if (startIndex < userMessages.length) {
+              const conversationGroup = userMessages.slice(startIndex);
+              groupedConversations.push({
+                user_id: uid,
+                conversation_id: null,
+                messages: conversationGroup
+              });
+            }
+          }
+        });
+
+        return groupedConversations;
+      }
+
+      // Get the most recent message's created_at from a conversation
+      function getLastMessageDate(conversation) {
+        if (!conversation.messages || conversation.messages.length === 0) {
+          return null;
+        }
+        
+        // Find the most recent message (highest created_at)
+        let mostRecent = conversation.messages[0];
+        conversation.messages.forEach(msg => {
+          const msgDate = new Date(msg.created_at).getTime();
+          const mostRecentDate = new Date(mostRecent.created_at).getTime();
+          if (msgDate > mostRecentDate) {
+            mostRecent = msg;
+          }
+        });
+        
+        return mostRecent.created_at;
+      }
+
+      // Format date for display
+      function formatCardDate(dateString) {
+        if (!dateString) return "—";
+        const date = new Date(dateString);
+        if (Number.isNaN(date.valueOf())) {
+          return dateString;
+        }
+        return date.toLocaleString("tr-TR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+      }
+
+      // Render conversation cards
+      function renderConversations(conversations) {
+        if (!conversations || conversations.length === 0) {
+          conversationsContainer.innerHTML = `
+            <div class="empty-state">
+              <p>Sonuç bulunamadı.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Sort conversations by most recent message's created_at (newest first)
+        const sortedConversations = [...conversations].sort((a, b) => {
+          const dateA = getLastMessageDate(a);
+          const dateB = getLastMessageDate(b);
+          
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1; // Put conversations without dates at the end
+          if (!dateB) return -1;
+          
+          const timeA = new Date(dateA).getTime();
+          const timeB = new Date(dateB).getTime();
+          return timeB - timeA; // Descending (newest first)
+        });
+
+        conversationsContainer.innerHTML = sortedConversations.map((conv, index) => {
+          // Store conversation data as JSON in data attribute
+          const convDataJson = JSON.stringify(conv);
+          const lastMessageDate = getLastMessageDate(conv);
+          const formattedDate = formatCardDate(lastMessageDate);
+          
+          return `
+            <div class="conversation-card" data-conversation='${convDataJson.replace(/'/g, "&#39;")}'>
+              <div class="conversation-label">En Son Kullanım Tarihi</div>
+              <div class="conversation-last-used">${formattedDate}</div>
+              <div class="conversation-label">User ID</div>
+              <div class="conversation-value">${conv.user_id || "—"}</div>
+              <div class="conversation-label">Conversation ID</div>
+              <div class="conversation-value">${conv.conversation_id || "—"}</div>
+              <div class="conversation-count">${conv.messages.length}</div>
+              <div class="conversation-subtitle">Mesaj sayısı</div>
+            </div>
+          `;
+        }).join("");
+
+        // Add click handlers to conversation cards
+        const cards = conversationsContainer.querySelectorAll(".conversation-card[data-conversation]");
+        cards.forEach(card => {
+          card.addEventListener("click", () => {
+            const convDataJson = card.getAttribute("data-conversation");
+            if (convDataJson) {
+              try {
+                const convData = JSON.parse(convDataJson);
+                showConversationModal(convData);
+              } catch (error) {
+                console.error("Error parsing conversation data:", error);
+              }
+            }
+          });
+        });
+      }
+
+      // Show conversation in modal
+      function showConversationModal(conversation) {
+        // Sort messages by created_at to show in chronological order
+        const sortedMessages = [...conversation.messages].sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return dateA - dateB; // Ascending (oldest first)
+        });
+
+        // Render messages
+        conversationModalBody.innerHTML = sortedMessages.map(msg => {
+          const userMessage = msg.user_message || "";
+          const aiResponse = msg.ai_response || "";
+
+          let messagesHTML = "";
+
+          const timestamp = formatMessageTimestamp(msg.created_at);
+
+          // User message (right side)
+          if (userMessage) {
+            messagesHTML += `
+              <div class="message user">
+                <div class="message-bubble">
+                  <div class="message-content">${escapeHtml(userMessage)}</div>
+                  <div class="message-timestamp">${timestamp}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          // AI response (left side) with markdown
+          if (aiResponse) {
+            const markdownHTML = window.marked ? window.marked.parse(aiResponse) : escapeHtml(aiResponse);
+            messagesHTML += `
+              <div class="message ai">
+                <div class="message-bubble">
+                  <div class="message-content">${markdownHTML}</div>
+                  <div class="message-timestamp">${timestamp}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          return messagesHTML;
+        }).join("");
+
+        // Scroll to bottom
+        conversationModalBody.scrollTop = conversationModalBody.scrollHeight;
+
+        // Show modal and lock body scroll
+        conversationModal.classList.add("show");
+        document.body.classList.add("modal-open");
+      }
+
+      // Close modal when clicking outside
+      conversationModal.addEventListener("click", (e) => {
+        if (e.target === conversationModal) {
+          conversationModal.classList.remove("show");
+          document.body.classList.remove("modal-open");
+        }
+      });
+
+      // Function to close modal
+      function closeConversationModal() {
+        conversationModal.classList.remove("show");
+        document.body.classList.remove("modal-open");
+      }
+
+      // Escape HTML to prevent XSS
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Format date for message timestamp
+      function formatMessageTimestamp(dateString) {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        if (Number.isNaN(date.valueOf())) {
+          return dateString;
+        }
+        return date.toLocaleString("tr-TR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+      }
+
+      // Perform search with filters
+      async function performSearch() {
+        try {
+          statusBanner.textContent = "Aranıyor...";
+          searchBtn.disabled = true;
+
+          const conversationId = conversationIdFilter.value.trim();
+          const userId = userIdFilter.value.trim();
+
+          // Build query
+          let query = supabaseClient.from("requests").select("*").order("created_at", { ascending: false });
+
+          // Don't add story, hadis, sure, fact
+          query = query.neq("page", "story").neq("page", "hadis").neq("page", "sure").neq("page", "fact");
+
+          // Apply filters only if they are not empty
+          if (conversationId) {
+            query = query.eq("conversation_id", conversationId);
+          }
+          if (userId) {
+            query = query.eq("user_id", userId);
+          }
+
+          // Execute query
+          const { data, error } = await query;
+
+          if (error) {
+            console.error("Query error:", error);
+            statusBanner.textContent = "Hata: " + error.message;
+            return;
+          }
+
+          // Group conversations
+          const groupedConversations = groupConversations(data);
+
+          // Log results to console
+          console.log("Raw search results:", data);
+          console.log("Grouped conversations:", groupedConversations);
+          console.log("Total conversations:", groupedConversations.length);
+
+          // Render conversations
+          renderConversations(groupedConversations);
+
+          // Update status
+          const resultCount = groupedConversations.length;
+          statusBanner.textContent = `${resultCount} sohbet bulundu.`;
+        } catch (error) {
+          console.error("Search error:", error);
+          statusBanner.textContent = "Arama sırasında bir hata oluştu.";
+        } finally {
+          searchBtn.disabled = false;
+        }
+      }
+
+      // Update URL with current filter values
+      function updateURL() {
+        const conversationId = conversationIdFilter.value.trim();
+        const userId = userIdFilter.value.trim();
+
+        const urlParams = new URLSearchParams();
+        if (conversationId) {
+          urlParams.set("conversation_id", conversationId);
+        }
+        if (userId) {
+          urlParams.set("user_id", userId);
+        }
+
+        const newURL = urlParams.toString()
+          ? `${window.location.pathname}?${urlParams.toString()}`
+          : window.location.pathname;
+
+        window.history.pushState({}, "", newURL);
+      }
+
+      // Event listeners
+      searchBtn.addEventListener("click", () => {
+        updateURL();
+        performSearch();
+      });
+
+      // Allow Enter key to trigger search
+      conversationIdFilter.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          updateURL();
+          performSearch();
+        }
+      });
+
+      userIdFilter.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          updateURL();
+          performSearch();
+        }
+      });
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "/";
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        performSearch();
+      });
+
+      // Initialize: Read URL parameters on page load
+      readURLParameters();
+    </script>
+  </body>
+</html>
+
