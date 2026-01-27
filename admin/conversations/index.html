@@ -1299,7 +1299,7 @@
           let query = supabaseClient.from("requests").select("*").order("created_at", { ascending: false });
 
           // Don't add story, hadis, sure, fact
-          query = query.neq("page", "story").neq("page", "hadis").neq("page", "sure").neq("page", "fact");
+          //query = query.neq("page", "story").neq("page", "hadis").neq("page", "sure").neq("page", "fact");
 
           // Apply filters only if they are not empty
           if (conversationId) {
