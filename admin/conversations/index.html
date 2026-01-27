@@ -302,6 +302,7 @@
       .modal-body {
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 24px;
         background: #f9fafb;
         display: flex;
@@ -314,6 +315,8 @@
         gap: 12px;
         max-width: 75%;
         animation: fadeIn 0.3s ease;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }
 
       @keyframes fadeIn {
@@ -334,14 +337,27 @@
 
       .message.ai {
         align-self: flex-start;
+        position: relative;
+        width: 70% ;
+      }
+
+      .message.ai .message-bubble {
+        position: relative;
+      }
+
+      .message.ai {
+        position: relative;
       }
 
       .message-bubble {
         padding: 12px 16px;
         border-radius: 18px;
         word-wrap: break-word;
+        overflow-wrap: break-word;
         line-height: 1.5;
         position: relative;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       .message.user .message-bubble {
@@ -455,6 +471,150 @@
 
       .message.ai .message-content em {
         font-style: italic;
+      }
+
+      .ai-flow-btn {
+        margin-top: 4px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #f9fafb;
+        color: #6366f1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        align-self: flex-start;
+      }
+
+      .ai-flow-btn:hover {
+        background: #f3f4f6;
+        border-color: #6366f1;
+      }
+
+      .ai-flow-popup {
+        position: fixed;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 24px;
+        width: 600px;
+        max-width: calc(100vw - 100px);
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(-10px);
+        transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      }
+
+      .ai-flow-popup.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+      }
+
+      @media (max-width: 1200px) {
+        .ai-flow-popup {
+          width: 500px;
+          max-width: calc(100vw - 80px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .ai-flow-popup {
+          left: 0;
+          right: 0;
+          top: calc(100% + 12px);
+          width: 100%;
+          max-width: 100%;
+          padding: 16px;
+        }
+      }
+
+      .ai-flow-popup.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+      }
+
+      .ai-flow-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .ai-flow-popup-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .ai-flow-popup-close {
+        background: transparent;
+        border: none;
+        font-size: 1.2rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .ai-flow-popup-close:hover {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      .ai-flow-content {
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: #111827;
+        white-space: pre;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        background: #1e1e1e;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        letter-spacing: 0;
+      }
+
+      .json-key {
+        color: #9cdcfe;
+      }
+
+      .json-string {
+        color: #ce9178;
+      }
+
+      .json-number {
+        color: #b5cea8;
+      }
+
+      .json-boolean {
+        color: #569cd6;
+      }
+
+      .json-null {
+        color: #569cd6;
+      }
+
+      .json-punctuation {
+        color: #d4d4d4;
       }
 
       .message-timestamp {
@@ -932,11 +1092,25 @@
           // AI response (left side) with markdown
           if (aiResponse) {
             const markdownHTML = window.marked ? window.marked.parse(aiResponse) : escapeHtml(aiResponse);
+            const hasAiFlow = msg.agent_flow && msg.agent_flow !== null;
+            const aiFlowId = hasAiFlow ? `ai-flow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : '';
+            const aiFlowJson = hasAiFlow ? JSON.stringify(msg.agent_flow, null, 2) : '';
+            
             messagesHTML += `
               <div class="message ai">
                 <div class="message-bubble">
                   <div class="message-content">${markdownHTML}</div>
                   <div class="message-timestamp">${timestamp}</div>
+                  ${hasAiFlow ? `
+                    <button class="ai-flow-btn" data-ai-flow-id="${aiFlowId}">AI Flow</button>
+                    <div id="${aiFlowId}" class="ai-flow-popup">
+                      <div class="ai-flow-popup-header">
+                        <h4>AI Flow</h4>
+                        <button class="ai-flow-popup-close" data-close-popup="${aiFlowId}">×</button>
+                      </div>
+                      <div class="ai-flow-content">${colorizeJson(aiFlowJson)}</div>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             `;
@@ -947,6 +1121,75 @@
 
         // Scroll to bottom
         conversationModalBody.scrollTop = conversationModalBody.scrollHeight;
+
+        // Add click handlers for AI Flow buttons
+        const aiFlowButtons = conversationModalBody.querySelectorAll(".ai-flow-btn");
+        aiFlowButtons.forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const popupId = btn.getAttribute("data-ai-flow-id");
+            const popup = document.getElementById(popupId);
+            if (popup) {
+              // Get modal content position
+              const modalContent = conversationModal.querySelector(".modal-content");
+              if (modalContent) {
+                const modalRect = modalContent.getBoundingClientRect();
+                
+                // Position popup to the right of the modal, aligned with top
+                const left = modalRect.right + 16;
+                const top = modalRect.top;
+                
+                // Set position
+                popup.style.left = `${left}px`;
+                popup.style.top = `${top}px`;
+                
+                // Ensure it doesn't go off screen horizontally
+                const popupWidth = popup.offsetWidth || 600;
+                if (left + popupWidth > window.innerWidth - 20) {
+                  popup.style.left = `${window.innerWidth - popupWidth - 450}px`;
+                }
+                
+                // Ensure it doesn't go off screen vertically
+                const popupHeight = popup.offsetHeight || 400;
+                if (top + popupHeight > window.innerHeight - 20) {
+                  popup.style.top = `${window.innerHeight - popupHeight - 20}px`;
+                }
+              }
+              
+              // Close all other popups
+              conversationModalBody.querySelectorAll(".ai-flow-popup.show").forEach(p => {
+                if (p.id !== popupId) {
+                  p.classList.remove("show");
+                }
+              });
+              
+              // Show current popup
+              popup.classList.toggle("show");
+            }
+          });
+        });
+
+        // Add click handlers for close buttons
+        const closeButtons = conversationModalBody.querySelectorAll(".ai-flow-popup-close");
+        closeButtons.forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const popupId = btn.getAttribute("data-close-popup");
+            const popup = document.getElementById(popupId);
+            if (popup) {
+              popup.classList.remove("show");
+            }
+          });
+        });
+
+        // Close popups when clicking outside
+        conversationModalBody.addEventListener("click", (e) => {
+          if (!e.target.closest(".ai-flow-popup") && !e.target.closest(".ai-flow-btn")) {
+            conversationModalBody.querySelectorAll(".ai-flow-popup.show").forEach(popup => {
+              popup.classList.remove("show");
+            });
+          }
+        });
 
         // Show modal and lock body scroll
         conversationModal.classList.add("show");
@@ -972,6 +1215,58 @@
         const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
+      }
+
+      // Colorize JSON for better readability (IDE-style)
+      function colorizeJson(jsonString) {
+        try {
+          // First, format the JSON with proper indentation
+          const parsed = JSON.parse(jsonString);
+          const formatted = JSON.stringify(parsed, null, 2);
+          
+          // Escape HTML first
+          let escaped = escapeHtml(formatted);
+          
+          // Process in order to avoid conflicts
+          // 1. Handle brackets and braces first (before other processing)
+          escaped = escaped.replace(/([{}[\]])/g, '<span class="json-punctuation">$1</span>');
+          
+          // 2. Handle commas (before other value processing)
+          escaped = escaped.replace(/,/g, '<span class="json-punctuation">,</span>');
+          
+          // 3. Handle keys (quoted strings followed by colored colon)
+          escaped = escaped.replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span><span class="json-punctuation">:</span>');
+          
+          // 4. Handle string values (quoted strings that aren't already keys)
+          // Match: : "value" pattern (after our colored colon)
+          escaped = escaped.replace(/(<span class="json-punctuation">:\s*<\/span>)\s*"([^"]*)"/g, '$1 <span class="json-string">"$2"</span>');
+          // Handle array string values (standalone quoted strings)
+          escaped = escaped.replace(/(^\s+)"([^"]*)"(?=\s*<span class="json-punctuation">[,}\]])/gm, (match, indent, value, offset, str) => {
+            // Check if this line already has json-key (meaning it's a key, not a value)
+            const lineStart = str.lastIndexOf('\n', offset);
+            const lineEnd = str.indexOf('\n', offset);
+            const line = str.substring(lineStart, lineEnd === -1 ? str.length : lineEnd);
+            if (line.includes('json-key')) return match;
+            return indent + '<span class="json-string">"' + value + '"</span>';
+          });
+          
+          // 5. Handle numbers (after strings)
+          escaped = escaped.replace(/(<span class="json-punctuation">:\s*<\/span>)\s*(-?\d+\.?\d*)(?=\s*<span class="json-punctuation">[,}\]])/g, '$1 <span class="json-number">$2</span>');
+          escaped = escaped.replace(/(^\s+)(-?\d+\.?\d*)(?=\s*<span class="json-punctuation">[,}\]])/gm, '$1<span class="json-number">$2</span>');
+          
+          // 6. Handle booleans
+          escaped = escaped.replace(/(<span class="json-punctuation">:\s*<\/span>)\s*(true|false)(?=\s*<span class="json-punctuation">[,}\]])/g, '$1 <span class="json-boolean">$2</span>');
+          escaped = escaped.replace(/(^\s+)(true|false)(?=\s*<span class="json-punctuation">[,}\]])/gm, '$1<span class="json-boolean">$2</span>');
+          
+          // 7. Handle null
+          escaped = escaped.replace(/(<span class="json-punctuation">:\s*<\/span>)\s*(null)(?=\s*<span class="json-punctuation">[,}\]])/g, '$1 <span class="json-null">$2</span>');
+          escaped = escaped.replace(/(^\s+)(null)(?=\s*<span class="json-punctuation">[,}\]])/gm, '$1<span class="json-null">$2</span>');
+          
+          return escaped;
+        } catch (e) {
+          // If JSON parsing fails, return escaped version
+          return escapeHtml(jsonString);
+        }
       }
 
       // Format date for message timestamp
