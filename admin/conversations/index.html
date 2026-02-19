@@ -493,6 +493,7 @@
       }
 
       .ai-flow-popup {
+        margin-top: -400px;  /* Change last used message to top of the screen */
         position: fixed;
         background: #fff;
         border: 1px solid #e5e7eb;
@@ -1109,6 +1110,7 @@
                         <button class="ai-flow-popup-close" data-close-popup="${aiFlowId}">×</button>
                       </div>
                       <div class="ai-flow-content">${colorizeJson(aiFlowJson)}</div>
+                      <div style="height: 400px; background-color: transparent;"></div>
                     </div>
                   ` : ''}
                 </div>
