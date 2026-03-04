@@ -962,8 +962,8 @@
           .select(
             `
             user_id,
-            total_sessions,
             daily_sessions,
+            total_sessions,
             binary_version,
             os_version,
             premium_days,
@@ -1029,8 +1029,8 @@
               return `
                 <tr>
                   <td>${stat.user_id || "—"}</td>
-                  <td>${stat.total_sessions ?? "—"}</td>
                   <td>${stat.daily_sessions ?? "—"}</td>
+                  <td>${stat.total_sessions ?? "—"}</td>
                   <td>${stat.binary_version || "—"}</td>
                   <td>${osDisplay}</td>
                   ${daysViewCombined 
