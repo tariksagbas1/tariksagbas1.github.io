@@ -194,6 +194,7 @@
         display: grid;
         gap: 10px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
       }
 
       .conversation-card:hover {
@@ -225,6 +226,57 @@
       .conversation-subtitle {
         font-size: 0.85rem;
         color: #6b7280;
+      }
+
+      .conversation-card-top-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .conversation-card-main {
+        display: grid;
+        gap: 6px;
+      }
+
+      .conversation-new-messages {
+        margin-top: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #ffffff;
+        background: linear-gradient(135deg, #c99cd8, #c4c0ff, #f7cdff);
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        animation: newMessagePulse 1.6s ease-in-out infinite;
+        width: 80%;
+      }
+
+      .conversation-new-messages::before {
+        content: "●";
+        font-size: 0.9rem;
+        color: #ffbbbb;
+      }
+
+      @keyframes newMessagePulse {
+        0% {
+          transform: translateY(0) scale(1);
+          box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+        }
+        50% {
+          transform: translateY(-1px) scale(1.03);
+          box-shadow: 0 14px 32px rgba(236, 72, 153, 0.5);
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+        }
       }
 
       .conversation-last-used {
@@ -297,6 +349,99 @@
         margin: 0;
         font-size: 1.25rem;
         color: #111827;
+      }
+
+      .messages-tick-btn {
+        border: none;
+        background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+        color: #1e293b;
+        padding: 8px 20px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1;
+        gap: 6px;
+        transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.2s ease, color 0.2s ease;
+        user-select: none;
+        flex: 0 0 auto;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+        letter-spacing: 0.02em;
+      }
+
+      .messages-tick-btn::before {
+        content: "☐";
+        font-size: 1.15rem;
+      }
+
+      .messages-tick-btn span {
+        white-space: nowrap;
+      }
+
+      .messages-tick-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(37, 99, 235, 0.3);
+        background: linear-gradient(135deg, #dbeafe, #ede9fe);
+      }
+
+      .messages-tick-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+      }
+
+      .messages-tick-btn.is-checked {
+        background: linear-gradient(135deg, #4f46e5, #22c55e);
+        color: #f9fafb;
+        box-shadow: 0 14px 30px rgba(79, 70, 229, 0.45);
+      }
+
+      .messages-tick-btn.is-checked::before {
+        content: "☑";
+      }
+
+      .conversation-tick-btn {
+        border: none;
+        background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+        color: #1e293b;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        cursor: default;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        line-height: 1;
+        transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.2s ease, color 0.2s ease;
+        user-select: none;
+        flex: 0 0 auto;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
+        pointer-events: none;
+      }
+
+      .conversation-tick-btn::before {
+        content: "☐";
+      }
+
+      .conversation-tick-btn.is-checked {
+        background: linear-gradient(135deg, #4f46e5, #22c55e);
+        color: #f9fafb;
+        box-shadow: 0 12px 26px rgba(79, 70, 229, 0.45);
+      }
+
+      .conversation-tick-btn.is-checked::before {
+        content: "☑";
+      }
+
+      .conversation-tick-btn:disabled,
+      .messages-tick-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
       }
 
       .modal-body {
@@ -636,7 +781,7 @@
         box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
         padding: 24px;
         display: grid;
-        grid-template-columns: 1fr 1fr auto;
+        grid-template-columns: 1fr 1fr auto auto;
         gap: 16px;
         align-items: end;
       }
@@ -665,6 +810,40 @@
         outline: none;
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .filter-toggle {
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 6px 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        color: #111827;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.05s ease;
+        white-space: nowrap;
+      }
+
+      .filter-toggle:hover {
+        border-color: rgba(99, 102, 241, 0.55);
+        box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+      }
+
+      .filter-toggle:active {
+        transform: translateY(1px);
+      }
+
+      .filter-toggle input[type="checkbox"] {
+        width: 10px;
+        height: 10px;
+        accent-color: #6366f1;
+        cursor: pointer;
       }
 
       .search-btn {
@@ -789,6 +968,10 @@
               <label for="user-id-filter">User ID</label>
               <input type="text" id="user-id-filter" placeholder="Örn: 123" />
             </div>
+            <label class="filter-toggle" for="unread-only-filter">
+              <input type="checkbox" id="unread-only-filter" />
+              Okunmamış
+            </label>
             <button id="search-btn" class="search-btn">Ara</button>
           </div>
 
@@ -811,6 +994,13 @@
       <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
           <h3>Mesajlar</h3>
+          <button
+            id="messages-tick-toggle"
+            class="messages-tick-btn"
+            type="button"
+            aria-pressed="false"
+            title="Toggle"
+          ></button>
         </div>
         <div class="modal-body" id="conversation-modal-body">
           <!-- Messages will be populated dynamically -->
@@ -831,18 +1021,30 @@
       const statusBanner = document.getElementById("status");
       const conversationIdFilter = document.getElementById("conversation-id-filter");
       const userIdFilter = document.getElementById("user-id-filter");
+      const unreadOnlyFilter = document.getElementById("unread-only-filter");
       const searchBtn = document.getElementById("search-btn");
       const signOutBtn = document.getElementById("sign-out");
       const refreshBtn = document.getElementById("refresh");
       const conversationsContainer = document.getElementById("conversations-container");
       const conversationModal = document.getElementById("conversation-modal");
       const conversationModalBody = document.getElementById("conversation-modal-body");
+      const messagesTickToggleBtn = document.getElementById("messages-tick-toggle");
+
+      let currentModalConversation = null;
+
+      if (messagesTickToggleBtn) {
+        messagesTickToggleBtn.addEventListener("click", () => {
+          if (!currentModalConversation) return;
+          handleConversationCheckToggle(currentModalConversation);
+        });
+      }
 
       // Read URL parameters on page load
       function readURLParameters() {
         const urlParams = new URLSearchParams(window.location.search);
         const conversationId = urlParams.get("conversation_id");
         const userId = urlParams.get("user_id");
+        const unreadOnly = urlParams.get("unread_only");
 
         if (conversationId) {
           conversationIdFilter.value = conversationId;
@@ -850,9 +1052,12 @@
         if (userId) {
           userIdFilter.value = userId;
         }
+        if (unreadOnlyFilter) {
+          unreadOnlyFilter.checked = unreadOnly === "1" || unreadOnly === "true";
+        }
 
         // If URL parameters exist, trigger search automatically
-        if (conversationId || userId) {
+        if (conversationId || userId || (unreadOnlyFilter && unreadOnlyFilter.checked)) {
           performSearch();
         }
       }
@@ -998,8 +1203,205 @@
         });
       }
 
+      // Global map for conversation status (from conversations table)
+      let conversationStatusById = {};
+
+      function setTickButtonState(btn, checked) {
+        if (!btn) return;
+        btn.classList.toggle("is-checked", !!checked);
+        btn.setAttribute("aria-pressed", String(!!checked));
+      }
+
+      function setModalTickDisabled(disabled) {
+        if (!messagesTickToggleBtn) return;
+        messagesTickToggleBtn.disabled = !!disabled;
+      }
+
+      function getConversationStatus(conversationId) {
+        if (!conversationId) return null;
+        return conversationStatusById && conversationStatusById[conversationId]
+          ? conversationStatusById[conversationId]
+          : null;
+      }
+
+      function computeConversationCheckedState(conversation) {
+        const conversationId = conversation && conversation.conversation_id ? conversation.conversation_id : null;
+        const totalCount = conversation && conversation.messages ? conversation.messages.length : 0;
+        const status = getConversationStatus(conversationId);
+
+        if (!conversationId || !status || typeof status.last_checked_message_count !== "number") {
+          return { checked: false, newMessages: 0, totalCount, conversationId };
+        }
+
+        if (status.last_checked_message_count === totalCount) {
+          return { checked: true, newMessages: 0, totalCount, conversationId };
+        }
+
+        if (status.last_checked_message_count < totalCount) {
+          return {
+            checked: false,
+            newMessages: Math.max(totalCount - status.last_checked_message_count, 0),
+            totalCount,
+            conversationId,
+          };
+        }
+
+        return { checked: false, newMessages: 0, totalCount, conversationId };
+      }
+
+      function updateCardUIForConversation(conversationId) {
+        if (!conversationId) return;
+        const card = conversationsContainer.querySelector(
+          `.conversation-card[data-conversation-id="${CSS.escape(conversationId)}"]`
+        );
+        if (!card) return;
+
+        const totalCount = Number(card.getAttribute("data-conversation-count") || "0");
+        const status = getConversationStatus(conversationId);
+
+        let checked = false;
+        let newMessages = 0;
+
+        if (!status) {
+          // Not found in conversations table => treat last_checked_message_count as 0
+          newMessages = totalCount;
+        } else if (typeof status.last_checked_message_count === "number") {
+          if (status.last_checked_message_count === totalCount) {
+            checked = true;
+          } else if (status.last_checked_message_count < totalCount) {
+            newMessages = Math.max(totalCount - status.last_checked_message_count, 0);
+          }
+        }
+
+        const tickBtn = card.querySelector(".conversation-tick-btn");
+        if (tickBtn) {
+          tickBtn.classList.toggle("is-checked", checked);
+        }
+
+        // Update badge
+        const existingBadge = card.querySelector(".conversation-new-messages");
+        if (newMessages > 0) {
+          if (existingBadge) {
+            existingBadge.textContent = `+${newMessages} yeni mesaj`;
+          } else {
+            const badge = document.createElement("div");
+            badge.className = "conversation-new-messages";
+            badge.textContent = `+${newMessages} yeni mesaj`;
+            const main = card.querySelector(".conversation-card-main");
+            if (main) main.appendChild(badge);
+          }
+        } else if (existingBadge) {
+          existingBadge.remove();
+        }
+      }
+
+      async function markConversationChecked(conversationId, conversationCount) {
+        // Implement the requested "upsert" behavior:
+        // - If row doesn't exist: INSERT (omit checked_at so DB default applies)
+        // - If row exists (conflict): UPDATE last_checked_message_count + checked_at=now()
+
+        const insertPayload = {
+          conversation_id: conversationId,
+          last_checked_message_count: conversationCount,
+        };
+
+        const { error: insertError } = await supabaseClient.from("conversations").insert([insertPayload]);
+
+        if (!insertError) {
+          // Insert success
+          conversationStatusById[conversationId] = {
+            checked_at: null,
+            last_checked_message_count: conversationCount,
+          };
+          return;
+        }
+
+        // If insert failed because it already exists, do the conflict update.
+        // PostgREST/Supabase may represent uniqueness errors as 409 or code 23505.
+        const isConflict =
+          insertError.code === "23505" ||
+          insertError.status === 409 ||
+          (typeof insertError.message === "string" && insertError.message.toLowerCase().includes("duplicate")) ||
+          (typeof insertError.details === "string" && insertError.details.toLowerCase().includes("already exists"));
+
+        if (!isConflict) {
+          throw insertError;
+        }
+
+        const nowIso = new Date().toISOString(); // timestamptz-safe
+        const { error: updateError } = await supabaseClient
+          .from("conversations")
+          .update({
+            last_checked_message_count: conversationCount,
+            checked_at: nowIso,
+          })
+          .eq("conversation_id", conversationId);
+        if (updateError) throw updateError;
+
+        conversationStatusById[conversationId] = {
+          checked_at: nowIso,
+          last_checked_message_count: conversationCount,
+        };
+      }
+
+      async function markConversationUnchecked(conversationId) {
+        // Only update last_checked_message_count to 0 (leave checked_at untouched)
+        const { error } = await supabaseClient
+          .from("conversations")
+          .update({ last_checked_message_count: 0 })
+          .eq("conversation_id", conversationId);
+        if (error) throw error;
+
+        if (!conversationStatusById[conversationId]) {
+          conversationStatusById[conversationId] = { checked_at: null, last_checked_message_count: 0 };
+        } else {
+          conversationStatusById[conversationId].last_checked_message_count = 0;
+        }
+      }
+
+      async function handleConversationCheckToggle(conversation) {
+        const state = computeConversationCheckedState(conversation);
+        if (!state.conversationId) return;
+
+        // Disable buttons during request
+        if (messagesTickToggleBtn) messagesTickToggleBtn.disabled = true;
+        const cardTick = conversationsContainer.querySelector(
+          `.conversation-card[data-conversation-id="${CSS.escape(state.conversationId)}"] .conversation-tick-btn`
+        );
+        if (cardTick) cardTick.disabled = true;
+
+        try {
+          if (!state.checked) {
+            await markConversationChecked(state.conversationId, state.totalCount);
+          } else {
+            await markConversationUnchecked(state.conversationId);
+          }
+
+          // Update modal tick (if open for same conversation)
+          if (
+            currentModalConversation &&
+            currentModalConversation.conversation_id === state.conversationId &&
+            messagesTickToggleBtn
+          ) {
+            const newState = computeConversationCheckedState(currentModalConversation);
+            setTickButtonState(messagesTickToggleBtn, newState.checked);
+          }
+
+          // Update card UI
+          updateCardUIForConversation(state.conversationId);
+        } catch (err) {
+          console.error("Failed to toggle conversation checked state:", err);
+          statusBanner.textContent = `Checkbox update failed: ${err?.message || err}`;
+        } finally {
+          if (messagesTickToggleBtn) messagesTickToggleBtn.disabled = false;
+          if (cardTick) cardTick.disabled = false;
+        }
+      }
+
       // Render conversation cards
-      function renderConversations(conversations) {
+      function renderConversations(conversations, statusMap) {
+        conversationStatusById = statusMap || {};
+
         if (!conversations || conversations.length === 0) {
           conversationsContainer.innerHTML = `
             <div class="empty-state">
@@ -1028,17 +1430,57 @@
           const convDataJson = JSON.stringify(conv);
           const lastMessageDate = getLastMessageDate(conv);
           const formattedDate = formatCardDate(lastMessageDate);
+          const totalCount = conv.messages.length;
+
+          let isChecked = false;
+          let newMessages = 0;
+
+          if (conv.conversation_id) {
+            if (statusMap && statusMap[conv.conversation_id]) {
+              const status = statusMap[conv.conversation_id];
+              const lastChecked = typeof status.last_checked_message_count === "number"
+                ? status.last_checked_message_count
+                : null;
+
+              if (lastChecked !== null) {
+                if (lastChecked === totalCount) {
+                  isChecked = true;
+                } else if (lastChecked < totalCount) {
+                  newMessages = Math.max(totalCount - lastChecked, 0);
+                }
+              }
+            } else {
+              // Not found in conversations table => treat last_checked_message_count as 0
+              newMessages = totalCount;
+            }
+          }
           
           return `
-            <div class="conversation-card" data-conversation='${convDataJson.replace(/'/g, "&#39;")}'>
-              <div class="conversation-label">En Son Kullanım Tarihi</div>
-              <div class="conversation-last-used">${formattedDate}</div>
-              <div class="conversation-label">User ID</div>
-              <div class="conversation-value">${conv.user_id || "—"}</div>
-              <div class="conversation-label">Conversation ID</div>
-              <div class="conversation-value">${conv.conversation_id || "—"}</div>
-              <div class="conversation-count">${conv.messages.length}</div>
-              <div class="conversation-subtitle">Mesaj sayısı</div>
+            <div class="conversation-card"
+                 data-conversation='${convDataJson.replace(/'/g, "&#39;")}'
+                 data-conversation-id="${conv.conversation_id || ""}"
+                 data-conversation-count="${totalCount}">
+              <div class="conversation-card-top-row">
+                <div class="conversation-card-main">
+                  <div class="conversation-label">En Son Kullanım Tarihi</div>
+                  <div class="conversation-last-used">${formattedDate}</div>
+                </div>
+                <button
+                  class="conversation-tick-btn${isChecked ? " is-checked" : ""}"
+                  type="button"
+                  aria-hidden="true"
+                  ${conv.conversation_id ? "" : "disabled"}
+                ></button>
+              </div>
+              <div class="conversation-card-main">
+                <div class="conversation-label">User ID</div>
+                <div class="conversation-value">${conv.user_id || "—"}</div>
+                <div class="conversation-label">Conversation ID</div>
+                <div class="conversation-value">${conv.conversation_id || "—"}</div>
+                <div class="conversation-count">${totalCount}</div>
+                <div class="conversation-subtitle">Mesaj sayısı</div>
+                ${newMessages > 0 ? `<div class="conversation-new-messages">+${newMessages} yeni mesaj</div>` : ""}
+              </div>
             </div>
           `;
         }).join("");
@@ -1058,10 +1500,13 @@
             }
           });
         });
+
       }
 
       // Show conversation in modal
       function showConversationModal(conversation) {
+        currentModalConversation = conversation;
+
         // Sort messages by created_at to show in chronological order
         const sortedMessages = [...conversation.messages].sort((a, b) => {
           const dateA = new Date(a.created_at).getTime();
@@ -1193,6 +1638,13 @@
           }
         });
 
+        // Sync header tick state with conversation status + disable if no conversation_id
+        if (messagesTickToggleBtn) {
+          const state = computeConversationCheckedState(conversation);
+          setTickButtonState(messagesTickToggleBtn, state.checked);
+          setModalTickDisabled(!state.conversationId);
+        }
+
         // Show modal and lock body scroll
         conversationModal.classList.add("show");
         document.body.classList.add("modal-open");
@@ -1311,7 +1763,7 @@
             query = query.eq("user_id", userId);
           }
 
-          // Execute query
+          // Execute query for messages
           const { data, error } = await query;
 
           if (error) {
@@ -1323,16 +1775,65 @@
           // Group conversations
           const groupedConversations = groupConversations(data);
 
+          // Collect unique non-null conversation_ids to check status
+          const conversationIds = Array.from(
+            new Set(
+              groupedConversations
+                .map((c) => c.conversation_id)
+                .filter((id) => id && String(id).trim() !== "")
+            )
+          );
+
+          let statusMap = {};
+
+          if (conversationIds.length > 0) {
+            const { data: statusData, error: statusError } = await supabaseClient
+              .from("conversations")
+              .select("conversation_id, checked_at, last_checked_message_count")
+              .in("conversation_id", conversationIds);
+
+            if (statusError) {
+              console.error("Conversations status query error:", statusError);
+            } else if (statusData && statusData.length > 0) {
+              statusMap = statusData.reduce((acc, row) => {
+                if (row.conversation_id) {
+                  acc[row.conversation_id] = {
+                    checked_at: row.checked_at,
+                    last_checked_message_count: row.last_checked_message_count,
+                  };
+                }
+                return acc;
+              }, {});
+            }
+          }
+
+          // Apply "unread only" filter: missing row OR count mismatch
+          const unreadOnlyEnabled = unreadOnlyFilter ? unreadOnlyFilter.checked : false;
+          const filteredConversations = unreadOnlyEnabled
+            ? groupedConversations.filter((conv) => {
+                const totalCount = conv.messages ? conv.messages.length : 0;
+                const convId = conv.conversation_id;
+
+                // If there's no conversation_id, treat as not existing in conversations table
+                if (!convId || String(convId).trim() === "") return true;
+
+                const status = statusMap[convId];
+                if (!status || typeof status.last_checked_message_count !== "number") return true;
+                return status.last_checked_message_count !== totalCount;
+              })
+            : groupedConversations;
+
           // Log results to console
           console.log("Raw search results:", data);
           console.log("Grouped conversations:", groupedConversations);
-          console.log("Total conversations:", groupedConversations.length);
+          console.log("Conversation status map:", statusMap);
+          console.log("Total conversations:", filteredConversations.length);
 
-          // Render conversations
-          renderConversations(groupedConversations);
+          // Render conversations with status map
+          renderConversations(filteredConversations, statusMap);
 
           // Update status
-          const resultCount = groupedConversations.length;
+          const resultCount = filteredConversations.length;
           statusBanner.textContent = `${resultCount} sohbet bulundu.`;
         } catch (error) {
           console.error("Search error:", error);
@@ -1346,6 +1847,7 @@
       function updateURL() {
         const conversationId = conversationIdFilter.value.trim();
         const userId = userIdFilter.value.trim();
+        const unreadOnly = unreadOnlyFilter ? unreadOnlyFilter.checked : false;
 
         const urlParams = new URLSearchParams();
         if (conversationId) {
@@ -1353,6 +1855,9 @@
         }
         if (userId) {
           urlParams.set("user_id", userId);
+        }
+        if (unreadOnly) {
+          urlParams.set("unread_only", "1");
         }
 
         const newURL = urlParams.toString()
