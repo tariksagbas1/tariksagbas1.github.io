@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sessions Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f4f6fb;
+        color: #111827;
+      }
+
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px;
+        height: 100vh;
+        padding: 32px 24px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        overflow-y: auto;
+        z-index: 100;
+      }
+
+      .sidebar h1 {
+        font-size: 1.4rem;
+        margin: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(4px);
+      }
+
+      .nav-links a.active {
+        background: rgba(79, 70, 229, 0.25);
+        color: #c7d2fe;
+      }
+
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin-left: 240px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 32px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      header button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        transition: opacity 0.2s ease;
+      }
+
+      header button:hover {
+        opacity: 0.9;
+      }
+
+      .button-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .button-secondary:hover {
+        box-shadow: 0 12px 28px rgba(107, 114, 128, 0.25);
+      }
+
+      main {
+        padding: 32px;
+        max-width: 100%;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+      }
+
+      .status-banner {
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        background: rgba(99, 102, 241, 0.08);
+        color: #312e81;
+      }
+
+      .filters-row {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .date-filters {
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-group label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #374151;
+      }
+
+      .filter-group input[type="date"] {
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        min-width: 170px;
+        background: #fff;
+        color: #111827;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .filter-group select {
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        min-width: 170px;
+        background: #fff;
+        color: #111827;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+      }
+
+      .filter-group input[type="date"]:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+      }
+
+      .filter-group select:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+      }
+
+      .filter-hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+        font-weight: 600;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .panel-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #111827;
+      }
+
+      .panel-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+
+      .panel-body {
+        padding: 20px 24px 26px;
+      }
+
+      .chart-wrap {
+        position: relative;
+        width: 100%;
+        height: 360px;
+      }
+
+      .chart-wrap.short {
+        height: 320px;
+      }
+
+      .panel-header-right {
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .mini-hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+        font-weight: 600;
+      }
+
+      .chart-legend-hint {
+        margin-top: 12px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          position: relative;
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .content {
+          margin-left: 0;
+        }
+
+        .nav-links {
+          flex-direction: row;
+        }
+
+        main {
+          padding: 24px;
+        }
+
+        header {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin Center</h1>
+        <nav class="nav-links">
+          <a href="../users">Kullanıcılar</a>
+          <a href="../support">Destek</a>
+          <a href="../statistics">İstatistikler</a>
+          <a href="../requests">İstekler</a>
+          <a href="../sessions" class="active">Sessions</a>
+          <a href="../conversations">Sohbetler</a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <header>
+          <h2>Sessions Paneli</h2>
+          <div class="header-actions">
+            <button id="refresh" class="button-secondary">Güncelle</button>
+            <button id="sign-out">Çıkış Yap</button>
+          </div>
+        </header>
+
+        <main>
+          <div class="filters-row">
+            <div id="status" class="status-banner" aria-live="polite">
+              Veriler yüklenmeyi bekliyor.
+            </div>
+
+            <div class="date-filters" aria-label="Date filters">
+              <div class="filter-group">
+                <label for="start-date">Başlangıç</label>
+                <input id="start-date" type="date" />
+              </div>
+              <div class="filter-group">
+                <label for="end-date">Bitiş</label>
+                <input id="end-date" type="date" />
+              </div>
+              <div class="filter-group">
+                <label for="interval-size">Aralık</label>
+                <select id="interval-size">
+                  <option value="10" selected>10 dakika</option>
+                  <option value="30">30 dakika</option>
+                  <option value="60">1 saat</option>
+                </select>
+              </div>
+              <div class="filter-hint">Filtre uygulayınca “Güncelle”</div>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Girişlerin Günün Saatine Göre Dağılımı</h3>
+                <div class="panel-subtitle">
+                  Toplam giriş sayısına göre normalize edilmiştir.
+                </div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap">
+                <canvas id="sessions-timeofday-chart"></canvas>
+              </div>
+              <div class="chart-legend-hint">
+                <div><strong>Y ekseni</strong>: Oran (0–1)</div>
+                <div><strong>X ekseni</strong>: Zaman Aralığı</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Günlük Girişler</h3>
+                <div class="panel-subtitle">Günlük toplam giriş sayısı.</div>
+              </div>
+              <div class="panel-header-right" aria-label="Graph 2 date filters">
+                <div class="filter-group">
+                  <label for="daily-start-date">Başlangıç</label>
+                  <input id="daily-start-date" type="date" />
+                </div>
+                <div class="filter-group">
+                  <label for="daily-end-date">Bitiş</label>
+                  <input id="daily-end-date" type="date" />
+                </div>
+                <div class="mini-hint">Varsayılan: son 30 gün</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap short">
+                <canvas id="sessions-per-day-chart"></canvas>
+              </div>
+              <div class="chart-legend-hint">
+                <div><strong>Y ekseni</strong>: Giriş sayısı</div>
+                <div><strong>X ekseni</strong>: Gün</div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+      const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3eGtnYWxwaWJidW1hbHlsbW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODY2MzUsImV4cCI6MjA2NTU2MjYzNX0.VVg1x3-m1bsuU2RpJgnGqUqACZ7FVdisdctjobGQ680";
+
+      const { createClient } = window.supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusBanner = document.getElementById("status");
+      const refreshBtn = document.getElementById("refresh");
+      const signOutBtn = document.getElementById("sign-out");
+      const startDateInput = document.getElementById("start-date");
+      const endDateInput = document.getElementById("end-date");
+      const intervalSizeSelect = document.getElementById("interval-size");
+
+      const chartCanvas = document.getElementById("sessions-timeofday-chart");
+      let timeOfDayChart = null;
+      const perDayCanvas = document.getElementById("sessions-per-day-chart");
+      let perDayChart = null;
+
+      const dailyStartDateInput = document.getElementById("daily-start-date");
+      const dailyEndDateInput = document.getElementById("daily-end-date");
+
+      function getIntervalMinutes() {
+        const raw = intervalSizeSelect ? Number(intervalSizeSelect.value) : 10;
+        if (raw === 30 || raw === 60 || raw === 10) return raw;
+        return 10;
+      }
+
+      function getBinsPerDay(intervalMinutes) {
+        return Math.floor(1440 / intervalMinutes);
+      }
+
+      function binIndexFromDate(d, intervalMinutes) {
+        const hours = d.getHours();
+        const minutes = d.getMinutes();
+        const bucket = Math.floor((hours * 60 + minutes) / intervalMinutes);
+        return bucket;
+      }
+
+      function labelForBin(binIdx, intervalMinutes) {
+        const totalMinutes = binIdx * intervalMinutes;
+        const hour = Math.floor(totalMinutes / 60);
+        const min = totalMinutes % 60;
+        return `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+      }
+
+      function toRangeIso(dateStr, endOfDay) {
+        // Interpret the selected date in the viewer's local time, then convert to ISO (timestamptz-safe).
+        if (!dateStr) return null;
+        const d = new Date(`${dateStr}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}`);
+        if (Number.isNaN(d.valueOf())) return null;
+        return d.toISOString();
+      }
+
+      function getSelectedDateRange() {
+        const startStr = startDateInput ? startDateInput.value : "";
+        const endStr = endDateInput ? endDateInput.value : "";
+        const startIso = toRangeIso(startStr, false);
+        const endIso = toRangeIso(endStr, true);
+        return { startStr, endStr, startIso, endIso };
+      }
+
+      function getSelectedDailyRange() {
+        const startStr = dailyStartDateInput ? dailyStartDateInput.value : "";
+        const endStr = dailyEndDateInput ? dailyEndDateInput.value : "";
+        const startIso = toRangeIso(startStr, false);
+        const endIso = toRangeIso(endStr, true);
+        return { startStr, endStr, startIso, endIso };
+      }
+
+      function formatDateInputValue(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function ensureDailyDefaults() {
+        if (!dailyStartDateInput || !dailyEndDateInput) return;
+        if (dailyStartDateInput.value && dailyEndDateInput.value) return;
+        const today = new Date();
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const start = new Date(end);
+        start.setDate(start.getDate() - 29);
+        if (!dailyEndDateInput.value) dailyEndDateInput.value = formatDateInputValue(end);
+        if (!dailyStartDateInput.value) dailyStartDateInput.value = formatDateInputValue(start);
+      }
+
+      async function fetchAllSessionCreatedAts(range) {
+        const pageSize = 1000;
+        let from = 0;
+        let out = [];
+
+        while (true) {
+          let q = supabaseClient.from("sessions").select("created_at").order("created_at", { ascending: true });
+          if (range && range.startIso) q = q.gte("created_at", range.startIso);
+          if (range && range.endIso) q = q.lte("created_at", range.endIso);
+
+          const { data, error } = await q.range(from, from + pageSize - 1);
+
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+
+          out = out.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+
+        return out.map((r) => r.created_at).filter(Boolean);
+      }
+
+      function buildDistribution(createdAts, intervalMinutes) {
+        const binsPerDay = getBinsPerDay(intervalMinutes);
+        const bins = new Array(binsPerDay).fill(0);
+
+        createdAts.forEach((ts) => {
+          const d = new Date(ts);
+          if (Number.isNaN(d.valueOf())) return;
+          const idx = binIndexFromDate(d, intervalMinutes);
+          if (idx >= 0 && idx < binsPerDay) bins[idx] += 1;
+        });
+
+        const total = bins.reduce((a, b) => a + b, 0);
+        const normalized = total > 0 ? bins.map((c) => c / total) : bins.map(() => 0);
+        return { bins, normalized, total };
+      }
+
+      function localDayKey(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+
+      function buildDailyCounts(createdAts) {
+        const countsByDay = new Map();
+        createdAts.forEach((ts) => {
+          const d = new Date(ts);
+          if (Number.isNaN(d.valueOf())) return;
+          const key = localDayKey(d);
+          countsByDay.set(key, (countsByDay.get(key) || 0) + 1);
+        });
+        const labels = Array.from(countsByDay.keys()).sort();
+        const counts = labels.map((k) => countsByDay.get(k) || 0);
+        return { labels, counts };
+      }
+
+      function renderTimeOfDayChart(labels, normalized, counts, total, intervalMinutes) {
+        const ctx = chartCanvas.getContext("2d");
+        if (timeOfDayChart) timeOfDayChart.destroy();
+
+        const maxVal = normalized.reduce((m, v) => (v > m ? v : m), 0);
+        // Add a little headroom so tallest bar isn't flush to the top.
+        const yMax = maxVal > 0 ? maxVal * 1.12 : 1;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 360);
+        gradient.addColorStop(0, "rgba(79, 70, 229, 0.95)");
+        gradient.addColorStop(1, "rgba(34, 197, 94, 0.75)");
+
+        timeOfDayChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Normalized sessions",
+                data: normalized,
+                backgroundColor: gradient,
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 18,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => {
+                    const idx = items[0].dataIndex;
+                    const start = labels[idx];
+                    // end label (next bin) for readability
+                    const end =
+                      idx < labels.length - 1
+                        ? labels[idx + 1]
+                        : `24:00`;
+                    return `${start}–${end}`;
+                  },
+                  label: (ctx) => {
+                    const idx = ctx.dataIndex;
+                    const count = counts[idx];
+                    const ratio = normalized[idx];
+                    const pct = (ratio * 100).toFixed(2);
+                    return `Count: ${count}  •  ${pct}% of total (${total})`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0,
+                  autoSkip: false,
+                  callback: (value, index) => {
+                    // Show only hour labels to reduce clutter
+                    // For 10m bins -> every 6; 30m -> every 2; 60m -> every 1
+                    const step = Math.max(1, Math.floor(60 / intervalMinutes));
+                    return index % step === 0 ? labels[index] : "";
+                  },
+                  font: { size: 11 },
+                },
+              },
+              y: {
+                beginAtZero: true,
+                max: yMax,
+                ticks: {
+                  callback: (v) => v.toFixed(3),
+                },
+                grid: {
+                  color: "rgba(148, 163, 184, 0.25)",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderPerDayChart(labels, counts) {
+        const ctx = perDayCanvas.getContext("2d");
+        if (perDayChart) perDayChart.destroy();
+
+        const maxCount = counts.reduce((m, v) => (v > m ? v : m), 0);
+        const yMax = maxCount > 0 ? Math.ceil(maxCount * 1.12) : 1;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+        gradient.addColorStop(0, "rgba(236, 72, 153, 0.90)");
+        gradient.addColorStop(1, "rgba(99, 102, 241, 0.70)");
+
+        perDayChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Sessions per day",
+                data: counts,
+                backgroundColor: gradient,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 26,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => labels[items[0].dataIndex],
+                  label: (ctx) => `Count: ${counts[ctx.dataIndex]}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0,
+                  autoSkip: true,
+                  maxTicksLimit: 10,
+                  font: { size: 11 },
+                },
+              },
+              y: {
+                beginAtZero: true,
+                max: yMax,
+                grid: { color: "rgba(148, 163, 184, 0.25)" },
+              },
+            },
+          },
+        });
+      }
+
+      async function loadSessionsTimeOfDay() {
+        try {
+          statusBanner.textContent = "Sessions yükleniyor...";
+          refreshBtn.disabled = true;
+
+          const range = getSelectedDateRange();
+          if (range.startIso && range.endIso && range.startIso > range.endIso) {
+            statusBanner.textContent = "Hata: Başlangıç tarihi, bitiş tarihinden sonra olamaz.";
+            return;
+          }
+
+          const createdAts = await fetchAllSessionCreatedAts(range);
+          const intervalMinutes = getIntervalMinutes();
+          const { bins, normalized, total } = buildDistribution(createdAts, intervalMinutes);
+
+          const binsPerDay = getBinsPerDay(intervalMinutes);
+          const labels = Array.from({ length: binsPerDay }, (_, i) => labelForBin(i, intervalMinutes));
+          renderTimeOfDayChart(labels, normalized, bins, total, intervalMinutes);
+
+          const rangeText =
+            range.startStr || range.endStr
+              ? ` (${range.startStr || "…"} → ${range.endStr || "…"})`
+              : "";
+          statusBanner.textContent = `Toplam session: ${total}.${rangeText} Aralık: ${intervalMinutes} dk. Grafik güncellendi.`;
+        } catch (err) {
+          console.error("Failed to load sessions:", err);
+          statusBanner.textContent = `Hata: ${err?.message || err}`;
+        } finally {
+          refreshBtn.disabled = false;
+        }
+      }
+
+      async function loadSessionsPerDay() {
+        try {
+          ensureDailyDefaults();
+          const range = getSelectedDailyRange();
+          if (range.startIso && range.endIso && range.startIso > range.endIso) {
+            statusBanner.textContent = "Hata: (Günlük) Başlangıç tarihi, bitiş tarihinden sonra olamaz.";
+            return;
+          }
+
+          const createdAts = await fetchAllSessionCreatedAts(range);
+          const { labels, counts } = buildDailyCounts(createdAts);
+          renderPerDayChart(labels, counts);
+        } catch (err) {
+          console.error("Failed to load sessions per day:", err);
+          statusBanner.textContent = `Hata: ${err?.message || err}`;
+        }
+      }
+
+      async function loadAllCharts() {
+        await loadSessionsTimeOfDay();
+        await loadSessionsPerDay();
+      }
+
+      refreshBtn.addEventListener("click", () => {
+        loadAllCharts();
+      });
+
+      signOutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "/";
+      });
+
+      ensureDailyDefaults();
+      loadAllCharts();
+    </script>
+  </body>
+</html>

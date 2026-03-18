@@ -264,6 +264,52 @@
         color: #ffbbbb;
       }
 
+      .conversation-feedback-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      .thumb-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+      }
+
+      .thumb-badge.thumb-up {
+        color: #064e3b;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(16, 185, 129, 0.18));
+        border: 1px solid rgba(16, 185, 129, 0.35);
+      }
+
+      .thumb-badge.thumb-down {
+        color: #7f1d1d;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(244, 114, 182, 0.14));
+        border: 1px solid rgba(239, 68, 68, 0.35);
+      }
+
+      .feedback-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(236, 72, 153, 0.18));
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        color: #312e81;
+        box-shadow: 0 10px 22px rgba(79, 70, 229, 0.22);
+        font-size: 0.95rem;
+      }
+
       @keyframes newMessagePulse {
         0% {
           transform: translateY(0) scale(1);
@@ -775,6 +821,137 @@
         color: #6b7280;
       }
 
+      .message-feedback-icons {
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .msg-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+        user-select: none;
+      }
+
+      .msg-icon.like {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(16, 185, 129, 0.18));
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #065f46;
+      }
+
+      .msg-icon.dislike {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(244, 114, 182, 0.14));
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        color: #7f1d1d;
+      }
+
+      .feedback-detail-btn {
+        border: none;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(236, 72, 153, 0.18));
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        color: #312e81;
+        box-shadow: 0 10px 22px rgba(79, 70, 229, 0.22);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.08s ease, box-shadow 0.15s ease;
+      }
+
+      .feedback-detail-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(236, 72, 153, 0.32);
+      }
+
+      .feedback-detail-btn:active {
+        transform: translateY(0);
+      }
+
+      .feedback-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        padding: 20px;
+      }
+
+      .feedback-modal.show {
+        display: flex;
+      }
+
+      .feedback-modal-card {
+        width: min(560px, 95vw);
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+
+      .feedback-modal-header {
+        padding: 16px 18px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .feedback-modal-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #111827;
+      }
+
+      .feedback-modal-close {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #6b7280;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .feedback-modal-close:hover {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      .feedback-modal-body {
+        padding: 16px 18px 18px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .feedback-rating {
+        font-weight: 800;
+        color: #4f46e5;
+      }
+
+      .feedback-text {
+        white-space: pre-wrap;
+        color: #111827;
+        line-height: 1.5;
+      }
+
       .filters-container {
         background: #fff;
         border-radius: 18px;
@@ -943,6 +1120,7 @@
           <a href="../support">Destek</a>
           <a href="../statistics">İstatistikler</a>
           <a href="../requests">İstekler</a>
+          <a href="../sessions">Sessions</a>
           <a href="../conversations" class="active">Sohbetler</a>
         </nav>
       </aside>
@@ -1008,6 +1186,20 @@
       </div>
     </div>
 
+    <!-- Feedback detail modal -->
+    <div id="feedback-modal" class="feedback-modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="feedback-modal-card" onclick="event.stopPropagation()">
+        <div class="feedback-modal-header">
+          <h4>Feedback</h4>
+          <button id="feedback-modal-close" class="feedback-modal-close" type="button">×</button>
+        </div>
+        <div class="feedback-modal-body">
+          <div>Rating: <span id="feedback-modal-rating" class="feedback-rating">—</span></div>
+          <div id="feedback-modal-text" class="feedback-text">—</div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
     <script>
@@ -1029,6 +1221,10 @@
       const conversationModal = document.getElementById("conversation-modal");
       const conversationModalBody = document.getElementById("conversation-modal-body");
       const messagesTickToggleBtn = document.getElementById("messages-tick-toggle");
+      const feedbackModal = document.getElementById("feedback-modal");
+      const feedbackModalClose = document.getElementById("feedback-modal-close");
+      const feedbackModalRating = document.getElementById("feedback-modal-rating");
+      const feedbackModalText = document.getElementById("feedback-modal-text");
 
       let currentModalConversation = null;
 
@@ -1205,6 +1401,42 @@
 
       // Global map for conversation status (from conversations table)
       let conversationStatusById = {};
+      // Global map for aggregated feedback per conversation
+      let conversationFeedbackByKey = {};
+      // Global map for per-message feedback details (keyed by message_id)
+      let messageFeedbackById = {};
+
+      function getMessageIdFromRow(row) {
+        if (!row) return "";
+        const candidate = row.message_id ?? row.id ?? row.request_id ?? row.uuid;
+        return candidate ? String(candidate) : "";
+      }
+
+      function openFeedbackModal({ rating, feedback }) {
+        if (!feedbackModal) return;
+        if (feedbackModalRating) {
+          feedbackModalRating.textContent =
+            typeof rating === "number" ? String(rating) : (rating ?? "—");
+        }
+        if (feedbackModalText) {
+          feedbackModalText.textContent = (typeof feedback === "string" && feedback.trim() !== "") ? feedback : "—";
+        }
+        feedbackModal.classList.add("show");
+        feedbackModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeFeedbackModal() {
+        if (!feedbackModal) return;
+        feedbackModal.classList.remove("show");
+        feedbackModal.setAttribute("aria-hidden", "true");
+      }
+
+      if (feedbackModalClose) {
+        feedbackModalClose.addEventListener("click", closeFeedbackModal);
+      }
+      if (feedbackModal) {
+        feedbackModal.addEventListener("click", closeFeedbackModal);
+      }
 
       function setTickButtonState(btn, checked) {
         if (!btn) return;
@@ -1399,8 +1631,9 @@
       }
 
       // Render conversation cards
-      function renderConversations(conversations, statusMap) {
+      function renderConversations(conversations, statusMap, feedbackMap) {
         conversationStatusById = statusMap || {};
+        conversationFeedbackByKey = feedbackMap || {};
 
         if (!conversations || conversations.length === 0) {
           conversationsContainer.innerHTML = `
@@ -1434,6 +1667,12 @@
 
           let isChecked = false;
           let newMessages = 0;
+          const convKey = conv.__key || (conv.conversation_id || `conv-${index}`);
+
+          const feedbackSummary = (feedbackMap && feedbackMap[convKey]) ? feedbackMap[convKey] : {};
+          const thumbsUpTrue = feedbackSummary.thumbsUpTrue || 0;
+          const thumbsUpFalse = feedbackSummary.thumbsUpFalse || 0;
+          const hasFeedback = !!feedbackSummary.hasFeedback;
 
           if (conv.conversation_id) {
             if (statusMap && statusMap[conv.conversation_id]) {
@@ -1459,11 +1698,19 @@
             <div class="conversation-card"
                  data-conversation='${convDataJson.replace(/'/g, "&#39;")}'
                  data-conversation-id="${conv.conversation_id || ""}"
-                 data-conversation-count="${totalCount}">
+                 data-conversation-count="${totalCount}"
+                 data-conversation-key="${convKey}">
               <div class="conversation-card-top-row">
                 <div class="conversation-card-main">
                   <div class="conversation-label">En Son Kullanım Tarihi</div>
                   <div class="conversation-last-used">${formattedDate}</div>
+                  ${(thumbsUpTrue > 0 || thumbsUpFalse > 0 || hasFeedback) ? `
+                    <div class="conversation-feedback-row">
+                      ${thumbsUpTrue > 0 ? `<span class="thumb-badge thumb-up" title="Thumbs up">👍 ${thumbsUpTrue}</span>` : ``}
+                      ${thumbsUpFalse > 0 ? `<span class="thumb-badge thumb-down" title="Thumbs down">👎 ${thumbsUpFalse}</span>` : ``}
+                      ${hasFeedback ? `<span class="feedback-icon" title="Feedback var">📝</span>` : ``}
+                    </div>
+                  ` : ``}
                 </div>
                 <button
                   class="conversation-tick-btn${isChecked ? " is-checked" : ""}"
@@ -1523,6 +1770,23 @@
 
           const timestamp = formatMessageTimestamp(msg.created_at);
 
+          const msgId = getMessageIdFromRow(msg);
+          const msgFeedback = msgId && messageFeedbackById ? messageFeedbackById[msgId] : null;
+          const msgHasUp = !!(msgFeedback && msgFeedback.hasUp);
+          const msgHasDown = !!(msgFeedback && msgFeedback.hasDown);
+          const msgHasFeedbackText = !!(msgFeedback && typeof msgFeedback.feedback === "string" && msgFeedback.feedback.trim() !== "");
+
+          const feedbackIconsHtml =
+            (msgHasUp || msgHasDown || msgHasFeedbackText)
+              ? `
+                <div class="message-feedback-icons">
+                  ${msgHasUp ? `<span class="msg-icon like" title="Liked">👍</span>` : ``}
+                  ${msgHasDown ? `<span class="msg-icon dislike" title="Disliked">👎</span>` : ``}
+                  ${msgHasFeedbackText ? `<button class="feedback-detail-btn" type="button" data-message-id="${escapeHtml(msgId)}" title="Feedback">📝</button>` : ``}
+                </div>
+              `
+              : "";
+
           // User message (right side)
           if (userMessage) {
             messagesHTML += `
@@ -1547,6 +1811,7 @@
                 <div class="message-bubble">
                   <div class="message-content">${markdownHTML}</div>
                   <div class="message-timestamp">${timestamp}</div>
+                  ${feedbackIconsHtml}
                   ${hasAiFlow ? `
                     <button class="ai-flow-btn" data-ai-flow-id="${aiFlowId}">AI Flow</button>
                     <div id="${aiFlowId}" class="ai-flow-popup">
@@ -1613,6 +1878,19 @@
               // Show current popup
               popup.classList.toggle("show");
             }
+          });
+        });
+
+        // Add click handlers for feedback detail buttons
+        const feedbackButtons = conversationModalBody.querySelectorAll(".feedback-detail-btn[data-message-id]");
+        feedbackButtons.forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const mid = btn.getAttribute("data-message-id");
+            if (!mid) return;
+            const details = messageFeedbackById ? messageFeedbackById[mid] : null;
+            if (!details) return;
+            openFeedbackModal({ rating: details.rating, feedback: details.feedback });
           });
         });
 
@@ -1774,36 +2052,85 @@
 
           // Group conversations
           const groupedConversations = groupConversations(data);
+          groupedConversations.forEach((conv, idx) => {
+            const firstMsgId = conv.messages && conv.messages[0] ? getMessageIdFromRow(conv.messages[0]) : "";
+            conv.__key = conv.conversation_id || `noid-${conv.user_id || "user"}-${firstMsgId || idx}`;
+          });
 
-          // Collect unique non-null conversation_ids to check status
-          const conversationIds = Array.from(
-            new Set(
-              groupedConversations
-                .map((c) => c.conversation_id)
-                .filter((id) => id && String(id).trim() !== "")
-            )
-          );
-
+          // Load conversations status table once (small table), then filter in-memory
           let statusMap = {};
-
-          if (conversationIds.length > 0) {
+          {
             const { data: statusData, error: statusError } = await supabaseClient
               .from("conversations")
-              .select("conversation_id, checked_at, last_checked_message_count")
-              .in("conversation_id", conversationIds);
+              .select("conversation_id, checked_at, last_checked_message_count");
 
             if (statusError) {
               console.error("Conversations status query error:", statusError);
-            } else if (statusData && statusData.length > 0) {
-              statusMap = statusData.reduce((acc, row) => {
-                if (row.conversation_id) {
-                  acc[row.conversation_id] = {
+            } else {
+              (statusData || []).forEach((row) => {
+                if (row && row.conversation_id) {
+                  statusMap[row.conversation_id] = {
                     checked_at: row.checked_at,
                     last_checked_message_count: row.last_checked_message_count,
                   };
                 }
-                return acc;
-              }, {});
+              });
+            }
+          }
+
+          // Query general_message_feedback once (batched) and aggregate per conversation
+          const messageIdToConvKey = {};
+          const allMessageIds = [];
+          groupedConversations.forEach((conv) => {
+            const key = conv.__key;
+            (conv.messages || []).forEach((msg) => {
+              const mid = getMessageIdFromRow(msg);
+              if (!mid) return;
+              messageIdToConvKey[mid] = key;
+              allMessageIds.push(mid);
+            });
+          });
+
+          const uniqueMessageIds = new Set(allMessageIds);
+          let feedbackAggByKey = {};
+          messageFeedbackById = {};
+          if (uniqueMessageIds.size > 0) {
+            // Load feedback table once (small table), then filter in-memory
+            const { data: fbData, error: fbError } = await supabaseClient
+              .from("general_message_feedback")
+              .select("thumbs_up, feedback, rating, message_id");
+
+            if (fbError) {
+              console.error("Feedback query error:", fbError);
+            } else {
+              (fbData || []).forEach((row) => {
+                const mid = row && row.message_id ? String(row.message_id) : "";
+                if (!mid) return;
+                if (!uniqueMessageIds.has(mid)) return;
+                const key = messageIdToConvKey[mid];
+                if (!key) return;
+
+                if (!feedbackAggByKey[key]) {
+                  feedbackAggByKey[key] = { thumbsUpTrue: 0, thumbsUpFalse: 0, hasFeedback: false };
+                }
+
+                if (row.thumbs_up === true) feedbackAggByKey[key].thumbsUpTrue += 1;
+                if (row.thumbs_up === false) feedbackAggByKey[key].thumbsUpFalse += 1;
+
+                if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
+                  feedbackAggByKey[key].hasFeedback = true;
+                }
+
+                if (!messageFeedbackById[mid]) {
+                  messageFeedbackById[mid] = { hasUp: false, hasDown: false, feedback: null, rating: null };
+                }
+                if (row.thumbs_up === true) messageFeedbackById[mid].hasUp = true;
+                if (row.thumbs_up === false) messageFeedbackById[mid].hasDown = true;
+                if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
+                  messageFeedbackById[mid].feedback = row.feedback;
+                  messageFeedbackById[mid].rating = row.rating;
+                }
+              });
             }
           }
 
@@ -1827,10 +2154,11 @@
           console.log("Raw search results:", data);
           console.log("Grouped conversations:", groupedConversations);
           console.log("Conversation status map:", statusMap);
+          console.log("Conversation feedback map:", feedbackAggByKey);
           console.log("Total conversations:", filteredConversations.length);
 
           // Render conversations with status map
-          renderConversations(filteredConversations, statusMap);
+          renderConversations(filteredConversations, statusMap, feedbackAggByKey);
 
           // Update status
           const resultCount = filteredConversations.length;
