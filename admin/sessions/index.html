@@ -417,6 +417,35 @@
               </div>
             </div>
           </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Günlük Kullanıcı Sayısı</h3>
+                <div class="panel-subtitle">Günlük toplam kullanıcı sayısı.</div>
+              </div>
+              <div class="panel-header-right" aria-label="Graph 3 date filters">
+                <div class="filter-group">
+                  <label for="unique-start-date">Başlangıç</label>
+                  <input id="unique-start-date" type="date" />
+                </div>
+                <div class="filter-group">
+                  <label for="unique-end-date">Bitiş</label>
+                  <input id="unique-end-date" type="date" />
+                </div>
+                <div class="mini-hint">Varsayılan: son 30 gün</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap short">
+                <canvas id="unique-users-per-day-chart"></canvas>
+              </div>
+              <div class="chart-legend-hint">
+                <div><strong>Y ekseni</strong>: Kullanıcı sayısı</div>
+                <div><strong>X ekseni</strong>: Gün</div>
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     </div>
@@ -442,9 +471,13 @@
       let timeOfDayChart = null;
       const perDayCanvas = document.getElementById("sessions-per-day-chart");
       let perDayChart = null;
+      const uniqueUsersPerDayCanvas = document.getElementById("unique-users-per-day-chart");
+      let uniqueUsersPerDayChart = null;
 
       const dailyStartDateInput = document.getElementById("daily-start-date");
       const dailyEndDateInput = document.getElementById("daily-end-date");
+      const uniqueStartDateInput = document.getElementById("unique-start-date");
+      const uniqueEndDateInput = document.getElementById("unique-end-date");
 
       function getIntervalMinutes() {
         const raw = intervalSizeSelect ? Number(intervalSizeSelect.value) : 10;
@@ -494,6 +527,14 @@
         return { startStr, endStr, startIso, endIso };
       }
 
+      function getSelectedUniqueRange() {
+        const startStr = uniqueStartDateInput ? uniqueStartDateInput.value : "";
+        const endStr = uniqueEndDateInput ? uniqueEndDateInput.value : "";
+        const startIso = toRangeIso(startStr, false);
+        const endIso = toRangeIso(endStr, true);
+        return { startStr, endStr, startIso, endIso };
+      }
+
       function formatDateInputValue(d) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -512,13 +553,27 @@
         if (!dailyStartDateInput.value) dailyStartDateInput.value = formatDateInputValue(start);
       }
 
-      async function fetchAllSessionCreatedAts(range) {
+      function ensureUniqueDefaults() {
+        if (!uniqueStartDateInput || !uniqueEndDateInput) return;
+        if (uniqueStartDateInput.value && uniqueEndDateInput.value) return;
+        const today = new Date();
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const start = new Date(end);
+        start.setDate(start.getDate() - 29);
+        if (!uniqueEndDateInput.value) uniqueEndDateInput.value = formatDateInputValue(end);
+        if (!uniqueStartDateInput.value) uniqueStartDateInput.value = formatDateInputValue(start);
+      }
+
+      async function fetchAllSessions(range, selectColumns = "created_at") {
         const pageSize = 1000;
         let from = 0;
         let out = [];
 
         while (true) {
-          let q = supabaseClient.from("sessions").select("created_at").order("created_at", { ascending: true });
+          let q = supabaseClient
+            .from("sessions")
+            .select(selectColumns)
+            .order("created_at", { ascending: true });
           if (range && range.startIso) q = q.gte("created_at", range.startIso);
           if (range && range.endIso) q = q.lte("created_at", range.endIso);
 
@@ -532,7 +587,7 @@
           from += pageSize;
         }
 
-        return out.map((r) => r.created_at).filter(Boolean);
+        return out;
       }
 
       function buildDistribution(createdAts, intervalMinutes) {
@@ -565,6 +620,23 @@
         });
         const labels = Array.from(countsByDay.keys()).sort();
         const counts = labels.map((k) => countsByDay.get(k) || 0);
+        return { labels, counts };
+      }
+
+      function buildDailyUniqueUserCounts(sessionRows) {
+        const usersByDay = new Map();
+        (sessionRows || []).forEach((row) => {
+          if (!row || !row.created_at) return;
+          const d = new Date(row.created_at);
+          if (Number.isNaN(d.valueOf())) return;
+          const key = localDayKey(d);
+          const uid = row.user_id !== null && row.user_id !== undefined ? String(row.user_id) : "";
+          if (!uid) return;
+          if (!usersByDay.has(key)) usersByDay.set(key, new Set());
+          usersByDay.get(key).add(uid);
+        });
+        const labels = Array.from(usersByDay.keys()).sort();
+        const counts = labels.map((k) => usersByDay.get(k).size);
         return { labels, counts };
       }
 
@@ -712,6 +784,65 @@
         });
       }
 
+      function renderUniqueUsersPerDayChart(labels, counts) {
+        const ctx = uniqueUsersPerDayCanvas.getContext("2d");
+        if (uniqueUsersPerDayChart) uniqueUsersPerDayChart.destroy();
+
+        const maxCount = counts.reduce((m, v) => (v > m ? v : m), 0);
+        const yMax = maxCount > 0 ? Math.ceil(maxCount * 1.12) : 1;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+        gradient.addColorStop(0, "rgba(16, 185, 129, 0.90)");
+        gradient.addColorStop(1, "rgba(59, 130, 246, 0.70)");
+
+        uniqueUsersPerDayChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Unique users per day",
+                data: counts,
+                backgroundColor: gradient,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 26,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => labels[items[0].dataIndex],
+                  label: (ctx) => `Unique users: ${counts[ctx.dataIndex]}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0,
+                  autoSkip: true,
+                  maxTicksLimit: 10,
+                  font: { size: 11 },
+                },
+              },
+              y: {
+                beginAtZero: true,
+                max: yMax,
+                grid: { color: "rgba(148, 163, 184, 0.25)" },
+              },
+            },
+          },
+        });
+      }
+
       async function loadSessionsTimeOfDay() {
         try {
           statusBanner.textContent = "Sessions yükleniyor...";
@@ -723,7 +854,9 @@
             return;
           }
 
-          const createdAts = await fetchAllSessionCreatedAts(range);
+          const createdAts = (await fetchAllSessions(range, "created_at"))
+            .map((r) => r.created_at)
+            .filter(Boolean);
           const intervalMinutes = getIntervalMinutes();
           const { bins, normalized, total } = buildDistribution(createdAts, intervalMinutes);
 
@@ -753,7 +886,10 @@
             return;
           }
 
-          const createdAts = await fetchAllSessionCreatedAts(range);
+          const rows = await fetchAllSessions(range, "created_at,user_id");
+          const createdAts = rows
+            .map((r) => r.created_at)
+            .filter(Boolean);
           const { labels, counts } = buildDailyCounts(createdAts);
           renderPerDayChart(labels, counts);
         } catch (err) {
@@ -762,9 +898,28 @@
         }
       }
 
+      async function loadUniqueUsersPerDay() {
+        try {
+          ensureUniqueDefaults();
+          const range = getSelectedUniqueRange();
+          if (range.startIso && range.endIso && range.startIso > range.endIso) {
+            statusBanner.textContent = "Hata: (Benzersiz) Başlangıç tarihi, bitiş tarihinden sonra olamaz.";
+            return;
+          }
+
+          const rows = await fetchAllSessions(range, "created_at,user_id");
+          const { labels, counts } = buildDailyUniqueUserCounts(rows);
+          renderUniqueUsersPerDayChart(labels, counts);
+        } catch (err) {
+          console.error("Failed to load unique users per day:", err);
+          statusBanner.textContent = `Hata: ${err?.message || err}`;
+        }
+      }
+
       async function loadAllCharts() {
         await loadSessionsTimeOfDay();
         await loadSessionsPerDay();
+        await loadUniqueUsersPerDay();
       }
 
       refreshBtn.addEventListener("click", () => {
@@ -777,6 +932,7 @@
       });
 
       ensureDailyDefaults();
+      ensureUniqueDefaults();
       loadAllCharts();
     </script>
   </body>
