@@ -446,35 +446,6 @@
               </div>
             </div>
           </section>
-
-          <section class="panel">
-            <div class="panel-header">
-              <div>
-                <h3>Günlük Yeni Kullanıcılar</h3>
-                <div class="panel-subtitle">users.created_on'a göre günlük yeni kullanıcılar.</div>
-              </div>
-              <div class="panel-header-right" aria-label="Graph 4 date filters">
-                <div class="filter-group">
-                  <label for="accounts-start-date">Başlangıç</label>
-                  <input id="accounts-start-date" type="date" />
-                </div>
-                <div class="filter-group">
-                  <label for="accounts-end-date">Bitiş</label>
-                  <input id="accounts-end-date" type="date" />
-                </div>
-                <div class="mini-hint">Varsayılan: son 30 gün</div>
-              </div>
-            </div>
-            <div class="panel-body">
-              <div class="chart-wrap short">
-                <canvas id="accounts-created-per-day-chart"></canvas>
-              </div>
-              <div class="chart-legend-hint">
-                <div><strong>Y ekseni</strong>: Oluşturulan hesap sayısı</div>
-                <div><strong>X ekseni</strong>: Gün</div>
-              </div>
-            </div>
-          </section>
         </main>
       </div>
     </div>
@@ -502,15 +473,11 @@
       let perDayChart = null;
       const uniqueUsersPerDayCanvas = document.getElementById("unique-users-per-day-chart");
       let uniqueUsersPerDayChart = null;
-      const accountsCreatedPerDayCanvas = document.getElementById("accounts-created-per-day-chart");
-      let accountsCreatedPerDayChart = null;
 
       const dailyStartDateInput = document.getElementById("daily-start-date");
       const dailyEndDateInput = document.getElementById("daily-end-date");
       const uniqueStartDateInput = document.getElementById("unique-start-date");
       const uniqueEndDateInput = document.getElementById("unique-end-date");
-      const accountsStartDateInput = document.getElementById("accounts-start-date");
-      const accountsEndDateInput = document.getElementById("accounts-end-date");
 
       function getIntervalMinutes() {
         const raw = intervalSizeSelect ? Number(intervalSizeSelect.value) : 10;
@@ -568,14 +535,6 @@
         return { startStr, endStr, startIso, endIso };
       }
 
-      function getSelectedAccountsRange() {
-        const startStr = accountsStartDateInput ? accountsStartDateInput.value : "";
-        const endStr = accountsEndDateInput ? accountsEndDateInput.value : "";
-        const startIso = toRangeIso(startStr, false);
-        const endIso = toRangeIso(endStr, true);
-        return { startStr, endStr, startIso, endIso };
-      }
-
       function formatDateInputValue(d) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -605,17 +564,6 @@
         if (!uniqueStartDateInput.value) uniqueStartDateInput.value = formatDateInputValue(start);
       }
 
-      function ensureAccountsDefaults() {
-        if (!accountsStartDateInput || !accountsEndDateInput) return;
-        if (accountsStartDateInput.value && accountsEndDateInput.value) return;
-        const today = new Date();
-        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const start = new Date(end);
-        start.setDate(start.getDate() - 29);
-        if (!accountsEndDateInput.value) accountsEndDateInput.value = formatDateInputValue(end);
-        if (!accountsStartDateInput.value) accountsStartDateInput.value = formatDateInputValue(start);
-      }
-
       async function fetchAllSessions(range, selectColumns = "created_at") {
         const pageSize = 1000;
         let from = 0;
@@ -640,32 +588,6 @@
         }
 
         return out;
-      }
-
-      async function fetchAllUsersCreatedOn(range) {
-        const pageSize = 1000;
-        let from = 0;
-        let out = [];
-
-        while (true) {
-          let q = supabaseClient
-            .from("users")
-            .select("created_on")
-            .order("created_on", { ascending: true });
-          if (range && range.startIso) q = q.gte("created_on", range.startIso);
-          if (range && range.endIso) q = q.lte("created_on", range.endIso);
-
-          const { data, error } = await q.range(from, from + pageSize - 1);
-
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-
-          out = out.concat(data);
-          if (data.length < pageSize) break;
-          from += pageSize;
-        }
-
-        return out.map((r) => r.created_on).filter(Boolean);
       }
 
       function buildDistribution(createdAts, intervalMinutes) {
@@ -921,65 +843,6 @@
         });
       }
 
-      function renderAccountsCreatedPerDayChart(labels, counts) {
-        const ctx = accountsCreatedPerDayCanvas.getContext("2d");
-        if (accountsCreatedPerDayChart) accountsCreatedPerDayChart.destroy();
-
-        const maxCount = counts.reduce((m, v) => (v > m ? v : m), 0);
-        const yMax = maxCount > 0 ? Math.ceil(maxCount * 1.12) : 1;
-
-        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
-        gradient.addColorStop(0, "rgba(249, 115, 22, 0.90)");
-        gradient.addColorStop(1, "rgba(244, 63, 94, 0.70)");
-
-        accountsCreatedPerDayChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Accounts created per day",
-                data: counts,
-                backgroundColor: gradient,
-                borderRadius: 8,
-                borderSkipped: false,
-                maxBarThickness: 26,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  title: (items) => labels[items[0].dataIndex],
-                  label: (ctx) => `Accounts created: ${counts[ctx.dataIndex]}`,
-                },
-              },
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: {
-                  maxRotation: 0,
-                  minRotation: 0,
-                  autoSkip: true,
-                  maxTicksLimit: 10,
-                  font: { size: 11 },
-                },
-              },
-              y: {
-                beginAtZero: true,
-                max: yMax,
-                grid: { color: "rgba(148, 163, 184, 0.25)" },
-              },
-            },
-          },
-        });
-      }
-
       async function loadSessionsTimeOfDay() {
         try {
           statusBanner.textContent = "Sessions yükleniyor...";
@@ -1053,29 +916,10 @@
         }
       }
 
-      async function loadAccountsCreatedPerDay() {
-        try {
-          ensureAccountsDefaults();
-          const range = getSelectedAccountsRange();
-          if (range.startIso && range.endIso && range.startIso > range.endIso) {
-            statusBanner.textContent = "Hata: (Hesaplar) Başlangıç tarihi, bitiş tarihinden sonra olamaz.";
-            return;
-          }
-
-          const createdOns = await fetchAllUsersCreatedOn(range);
-          const { labels, counts } = buildDailyCounts(createdOns);
-          renderAccountsCreatedPerDayChart(labels, counts);
-        } catch (err) {
-          console.error("Failed to load accounts created per day:", err);
-          statusBanner.textContent = `Hata: ${err?.message || err}`;
-        }
-      }
-
       async function loadAllCharts() {
         await loadSessionsTimeOfDay();
         await loadSessionsPerDay();
         await loadUniqueUsersPerDay();
-        await loadAccountsCreatedPerDay();
       }
 
       refreshBtn.addEventListener("click", () => {
@@ -1089,7 +933,6 @@
 
       ensureDailyDefaults();
       ensureUniqueDefaults();
-      ensureAccountsDefaults();
       loadAllCharts();
     </script>
   </body>

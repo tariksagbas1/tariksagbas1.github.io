@@ -963,6 +963,19 @@
         align-items: end;
       }
 
+      .filters-or-container {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: center;
+      }
+
+      .filters-or-hint {
+        grid-column: 1 / -1;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin: -4px 0 4px;
+      }
+
       .filter-group {
         display: flex;
         flex-direction: column;
@@ -1105,6 +1118,10 @@
           grid-template-columns: 1fr;
         }
 
+        .filters-or-container {
+          grid-template-columns: 1fr;
+        }
+
         .conversations-grid {
           grid-template-columns: 1fr;
         }
@@ -1151,6 +1168,28 @@
               Okunmamış
             </label>
             <button id="search-btn" class="search-btn">Ara</button>
+          </div>
+
+          <div class="filters-container filters-or-container">
+            <div class="filters-or-hint">
+              Ek filtreler (seçilenler OR ile birleşir; Okunmamış ile AND)
+            </div>
+            <label class="filter-toggle" for="filter-thumbs-up">
+              <input type="checkbox" id="filter-thumbs-up" />
+              👍 var
+            </label>
+            <label class="filter-toggle" for="filter-thumbs-down">
+              <input type="checkbox" id="filter-thumbs-down" />
+              👎 var
+            </label>
+            <label class="filter-toggle" for="filter-agent-flow">
+              <input type="checkbox" id="filter-agent-flow" />
+              AI Flow var
+            </label>
+            <label class="filter-toggle" for="filter-feedback-text">
+              <input type="checkbox" id="filter-feedback-text" />
+              Yazılı feedback var
+            </label>
           </div>
 
           <section class="panel">
@@ -1214,6 +1253,10 @@
       const conversationIdFilter = document.getElementById("conversation-id-filter");
       const userIdFilter = document.getElementById("user-id-filter");
       const unreadOnlyFilter = document.getElementById("unread-only-filter");
+      const filterThumbsUpEl = document.getElementById("filter-thumbs-up");
+      const filterThumbsDownEl = document.getElementById("filter-thumbs-down");
+      const filterAgentFlowEl = document.getElementById("filter-agent-flow");
+      const filterFeedbackTextEl = document.getElementById("filter-feedback-text");
       const searchBtn = document.getElementById("search-btn");
       const signOutBtn = document.getElementById("sign-out");
       const refreshBtn = document.getElementById("refresh");
@@ -1241,6 +1284,10 @@
         const conversationId = urlParams.get("conversation_id");
         const userId = urlParams.get("user_id");
         const unreadOnly = urlParams.get("unread_only");
+        const orFu = urlParams.get("or_fu");
+        const orFd = urlParams.get("or_fd");
+        const orFlow = urlParams.get("or_flow");
+        const orFb = urlParams.get("or_fb");
 
         if (conversationId) {
           conversationIdFilter.value = conversationId;
@@ -1251,9 +1298,23 @@
         if (unreadOnlyFilter) {
           unreadOnlyFilter.checked = unreadOnly === "1" || unreadOnly === "true";
         }
+        if (filterThumbsUpEl) filterThumbsUpEl.checked = orFu === "1" || orFu === "true";
+        if (filterThumbsDownEl) filterThumbsDownEl.checked = orFd === "1" || orFd === "true";
+        if (filterAgentFlowEl) filterAgentFlowEl.checked = orFlow === "1" || orFlow === "true";
+        if (filterFeedbackTextEl) filterFeedbackTextEl.checked = orFb === "1" || orFb === "true";
 
         // If URL parameters exist, trigger search automatically
-        if (conversationId || userId || (unreadOnlyFilter && unreadOnlyFilter.checked)) {
+        const hasOrFilters =
+          (filterThumbsUpEl && filterThumbsUpEl.checked) ||
+          (filterThumbsDownEl && filterThumbsDownEl.checked) ||
+          (filterAgentFlowEl && filterAgentFlowEl.checked) ||
+          (filterFeedbackTextEl && filterFeedbackTextEl.checked);
+        if (
+          conversationId ||
+          userId ||
+          (unreadOnlyFilter && unreadOnlyFilter.checked) ||
+          hasOrFilters
+        ) {
           performSearch();
         }
       }
@@ -2018,6 +2079,258 @@
         });
       }
 
+      function conversationHasAgentFlow(conv) {
+        if (!conv || !conv.messages) return false;
+        return conv.messages.some((msg) => {
+          if (!msg) return false;
+          const f = msg.agent_flow;
+          return f !== null && f !== undefined && f !== "";
+        });
+      }
+
+      /** OR across selected feedback filters; if none selected, pass all. */
+      function matchesOrFeedbackFilters(conv, feedbackAggByKey) {
+        const wantUp = filterThumbsUpEl && filterThumbsUpEl.checked;
+        const wantDown = filterThumbsDownEl && filterThumbsDownEl.checked;
+        const wantFlow = filterAgentFlowEl && filterAgentFlowEl.checked;
+        const wantFb = filterFeedbackTextEl && filterFeedbackTextEl.checked;
+        if (!wantUp && !wantDown && !wantFlow && !wantFb) return true;
+
+        const key = conv.__key;
+        const agg = (feedbackAggByKey && key && feedbackAggByKey[key]) ? feedbackAggByKey[key] : {};
+        const hasUp = (agg.thumbsUpTrue || 0) > 0;
+        const hasDown = (agg.thumbsUpFalse || 0) > 0;
+        const hasWritten = !!agg.hasFeedback;
+        const hasFlow = conversationHasAgentFlow(conv);
+
+        if (wantUp && hasUp) return true;
+        if (wantDown && hasDown) return true;
+        if (wantFlow && hasFlow) return true;
+        if (wantFb && hasWritten) return true;
+        return false;
+      }
+
+      function isUnreadConversation(conv, statusMap) {
+        const totalCount = conv.messages ? conv.messages.length : 0;
+        const convId = conv.conversation_id;
+        if (!convId || String(convId).trim() === "") return true;
+        const status = statusMap[convId];
+        if (!status || typeof status.last_checked_message_count !== "number") return true;
+        return status.last_checked_message_count !== totalCount;
+      }
+
+      /** Row matches selected OR feedback filters (thumbs / written feedback). */
+      function feedbackRowMatchesOrFilters(row, wantUp, wantDown, wantFb) {
+        if (wantUp && row.thumbs_up === true) return true;
+        if (wantDown && row.thumbs_up === false) return true;
+        if (wantFb && row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
+          return true;
+        }
+        return false;
+      }
+
+      /** Query general_message_feedback first; return matching rows + message_ids. */
+      async function fetchGeneralMessageFeedbackForOrFilters(wantUp, wantDown, wantFb) {
+        if (!wantUp && !wantDown && !wantFb) return { rows: [], messageIds: [] };
+
+        let allRows = [];
+        let from = 0;
+        const pageSize = 1000;
+
+        function buildFeedbackOrQuery() {
+          let q = supabaseClient
+            .from("general_message_feedback")
+            .select("message_id, thumbs_up, feedback");
+          if (wantUp && !wantDown && !wantFb) {
+            q = q.eq("thumbs_up", true);
+          } else if (!wantUp && wantDown && !wantFb) {
+            q = q.eq("thumbs_up", false);
+          } else if (!wantUp && !wantDown && wantFb) {
+            q = q.not("feedback", "is", null);
+          } else {
+            const parts = [];
+            if (wantUp) parts.push("thumbs_up.eq.true");
+            if (wantDown) parts.push("thumbs_up.eq.false");
+            if (wantFb) parts.push("feedback.not.is.null");
+            q = q.or(parts.join(","));
+          }
+          return q;
+        }
+
+        while (true) {
+          const { data, error } = await buildFeedbackOrQuery().range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allRows = allRows.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+
+        const rows = (allRows || []).filter((row) => feedbackRowMatchesOrFilters(row, wantUp, wantDown, wantFb));
+        const messageIds = [...new Set(rows.map((r) => r.message_id).filter(Boolean).map(String))];
+        return { rows, messageIds };
+      }
+
+      async function fetchRequestsByMessageIds(messageIds, conversationIdFilter, userIdFilter) {
+        if (!messageIds.length) return [];
+        const out = [];
+        const chunkSize = 200;
+        for (let i = 0; i < messageIds.length; i += chunkSize) {
+          const chunk = messageIds.slice(i, i + chunkSize);
+          const runIn = async (column) => {
+            let q = supabaseClient.from("requests").select("*").in(column, chunk);
+            if (conversationIdFilter) q = q.eq("conversation_id", conversationIdFilter);
+            if (userIdFilter) q = q.eq("user_id", userIdFilter);
+            return q;
+          };
+          // Önce message_id (çoğu şemada feedback bu sütuna yazar); yoksa / hata olursa id (PK) dene
+          let { data, error } = await runIn("message_id");
+          if (error) {
+            const { data: data2, error: err2 } = await runIn("id");
+            if (err2) {
+              throw new Error(
+                (error.message || String(error)) + " | id sorgusu: " + (err2.message || String(err2))
+              );
+            }
+            data = data2;
+          }
+          out.push(...(data || []));
+        }
+        return out;
+      }
+
+      function requestRowKey(row) {
+        if (!row) return "";
+        if (row.id !== undefined && row.id !== null) return `id:${String(row.id)}`;
+        return `mid:${String(row.message_id || "")}`;
+      }
+
+      /** Expand seed request rows to full threads (same conversation_id or full user history for noid). */
+      async function expandRequestsFromSeedRows(seedRows, conversationIdFilter, userIdFilter) {
+        if (!seedRows.length) return [];
+
+        const seen = new Map();
+        const add = (rows) => {
+          (rows || []).forEach((r) => {
+            const k = requestRowKey(r);
+            if (k && !seen.has(k)) seen.set(k, r);
+          });
+        };
+        add(seedRows);
+
+        const convIds = [
+          ...new Set(
+            seedRows.map((r) => r.conversation_id).filter((id) => id && String(id).trim() !== "")
+          ),
+        ];
+        const noidUserIds = [
+          ...new Set(
+            seedRows
+              .filter((r) => !r.conversation_id || String(r.conversation_id).trim() === "")
+              .map((r) => r.user_id)
+              .filter((u) => u !== null && u !== undefined && String(u).trim() !== "")
+          ),
+        ];
+
+        const chunkSize = 200;
+
+        if (convIds.length) {
+          for (let i = 0; i < convIds.length; i += chunkSize) {
+            const chunk = convIds.slice(i, i + chunkSize);
+            let q = supabaseClient.from("requests").select("*").in("conversation_id", chunk);
+            if (userIdFilter) q = q.eq("user_id", userIdFilter);
+            const { data, error } = await q.order("created_at", { ascending: false });
+            if (error) throw error;
+            add(data);
+          }
+        }
+
+        if (noidUserIds.length) {
+          for (let i = 0; i < noidUserIds.length; i += chunkSize) {
+            const chunk = noidUserIds.slice(i, i + chunkSize);
+            let q = supabaseClient.from("requests").select("*").in("user_id", chunk);
+            if (conversationIdFilter) q = q.eq("conversation_id", conversationIdFilter);
+            const { data, error } = await q.order("created_at", { ascending: false });
+            if (error) throw error;
+            add(data);
+          }
+        }
+
+        return Array.from(seen.values());
+      }
+
+      async function fetchRequestsAgentFlowRows(conversationIdFilter, userIdFilter) {
+        let q = supabaseClient.from("requests").select("*").not("agent_flow", "is", null);
+        if (conversationIdFilter) q = q.eq("conversation_id", conversationIdFilter);
+        if (userIdFilter) q = q.eq("user_id", userIdFilter);
+        const { data, error } = await q.order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+
+      function mergeRequestRowsUnique(a, b) {
+        const seen = new Map();
+        [...a, ...b].forEach((r) => {
+          const k = requestRowKey(r);
+          if (k && !seen.has(k)) seen.set(k, r);
+        });
+        return Array.from(seen.values());
+      }
+
+      function applyFeedbackRowToMaps(row, messageIdToConvKey, feedbackAggByKey) {
+        const mid = row && row.message_id ? String(row.message_id) : "";
+        if (!mid) return;
+        const key = messageIdToConvKey[mid];
+        if (!key) return;
+
+        if (!feedbackAggByKey[key]) {
+          feedbackAggByKey[key] = { thumbsUpTrue: 0, thumbsUpFalse: 0, hasFeedback: false };
+        }
+        if (row.thumbs_up === true) feedbackAggByKey[key].thumbsUpTrue += 1;
+        if (row.thumbs_up === false) feedbackAggByKey[key].thumbsUpFalse += 1;
+        if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
+          feedbackAggByKey[key].hasFeedback = true;
+        }
+        if (!messageFeedbackById[mid]) {
+          messageFeedbackById[mid] = { hasUp: false, hasDown: false, feedback: null, rating: null };
+        }
+        if (row.thumbs_up === true) messageFeedbackById[mid].hasUp = true;
+        if (row.thumbs_up === false) messageFeedbackById[mid].hasDown = true;
+        if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
+          messageFeedbackById[mid].feedback = row.feedback;
+          messageFeedbackById[mid].rating = row.rating;
+        }
+      }
+
+      /** Load feedback for given message_ids (optional prefetched rows from search step to avoid duplicate fetches). */
+      async function loadFeedbackForMessageIds(messageIdToConvKey, uniqueMessageIds, prefetchedFeedbackRows) {
+        let feedbackAggByKey = {};
+        messageFeedbackById = {};
+        const ids = Array.from(uniqueMessageIds);
+        if (!ids.length) return feedbackAggByKey;
+
+        const prefetched = prefetchedFeedbackRows || [];
+        prefetched.forEach((row) => applyFeedbackRowToMaps(row, messageIdToConvKey, feedbackAggByKey));
+
+        const prefetchedIds = new Set(prefetched.map((r) => (r && r.message_id ? String(r.message_id) : "")).filter(Boolean));
+        const idsToFetch = ids.filter((id) => !prefetchedIds.has(id));
+        const chunkSize = 500;
+        for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+          const chunk = idsToFetch.slice(i, i + chunkSize);
+          const { data: fbData, error: fbError } = await supabaseClient
+            .from("general_message_feedback")
+            .select("thumbs_up, feedback, message_id")
+            .in("message_id", chunk);
+
+          if (fbError) {
+            console.error("Feedback query error:", fbError);
+            continue;
+          }
+          (fbData || []).forEach((row) => applyFeedbackRowToMaps(row, messageIdToConvKey, feedbackAggByKey));
+        }
+        return feedbackAggByKey;
+      }
+
       // Perform search with filters
       async function performSearch() {
         try {
@@ -2027,27 +2340,47 @@
           const conversationId = conversationIdFilter.value.trim();
           const userId = userIdFilter.value.trim();
 
-          // Build query
-          let query = supabaseClient.from("requests").select("*").order("created_at", { ascending: false });
+          const wantUp = filterThumbsUpEl && filterThumbsUpEl.checked;
+          const wantDown = filterThumbsDownEl && filterThumbsDownEl.checked;
+          const wantFb = filterFeedbackTextEl && filterFeedbackTextEl.checked;
+          const wantAgentFlow = filterAgentFlowEl && filterAgentFlowEl.checked;
+          const wantFeedbackOr = wantUp || wantDown || wantFb;
 
-          // Don't add story, hadis, sure, fact
-          //query = query.neq("page", "story").neq("page", "hadis").neq("page", "sure").neq("page", "fact");
+          let data = [];
+          let prefetchedFeedbackRows = null;
 
-          // Apply filters only if they are not empty
-          if (conversationId) {
-            query = query.eq("conversation_id", conversationId);
-          }
-          if (userId) {
-            query = query.eq("user_id", userId);
-          }
-
-          // Execute query for messages
-          const { data, error } = await query;
-
-          if (error) {
-            console.error("Query error:", error);
-            statusBanner.textContent = "Hata: " + error.message;
-            return;
+          if (wantFeedbackOr && wantAgentFlow) {
+            const fb = await fetchGeneralMessageFeedbackForOrFilters(wantUp, wantDown, wantFb);
+            prefetchedFeedbackRows = fb.rows;
+            let fromFeedback = [];
+            if (fb.messageIds.length) {
+              const seeds = await fetchRequestsByMessageIds(fb.messageIds, conversationId, userId);
+              fromFeedback = await expandRequestsFromSeedRows(seeds, conversationId, userId);
+            }
+            const fromFlow = await fetchRequestsAgentFlowRows(conversationId, userId);
+            data = mergeRequestRowsUnique(fromFeedback, fromFlow);
+          } else if (wantFeedbackOr) {
+            const fb = await fetchGeneralMessageFeedbackForOrFilters(wantUp, wantDown, wantFb);
+            prefetchedFeedbackRows = fb.rows;
+            if (!fb.messageIds.length) {
+              data = [];
+            } else {
+              const seeds = await fetchRequestsByMessageIds(fb.messageIds, conversationId, userId);
+              data = await expandRequestsFromSeedRows(seeds, conversationId, userId);
+            }
+          } else if (wantAgentFlow) {
+            data = await fetchRequestsAgentFlowRows(conversationId, userId);
+          } else {
+            let query = supabaseClient.from("requests").select("*").order("created_at", { ascending: false });
+            if (conversationId) query = query.eq("conversation_id", conversationId);
+            if (userId) query = query.eq("user_id", userId);
+            const { data: rows, error } = await query;
+            if (error) {
+              console.error("Query error:", error);
+              statusBanner.textContent = "Hata: " + error.message;
+              return;
+            }
+            data = rows || [];
           }
 
           // Group conversations
@@ -2078,7 +2411,6 @@
             }
           }
 
-          // Query general_message_feedback once (batched) and aggregate per conversation
           const messageIdToConvKey = {};
           const allMessageIds = [];
           groupedConversations.forEach((conv) => {
@@ -2092,63 +2424,23 @@
           });
 
           const uniqueMessageIds = new Set(allMessageIds);
-          let feedbackAggByKey = {};
-          messageFeedbackById = {};
-          if (uniqueMessageIds.size > 0) {
-            // Load feedback table once (small table), then filter in-memory
-            const { data: fbData, error: fbError } = await supabaseClient
-              .from("general_message_feedback")
-              .select("thumbs_up, feedback, rating, message_id");
+          const feedbackAggByKey = await loadFeedbackForMessageIds(
+            messageIdToConvKey,
+            uniqueMessageIds,
+            prefetchedFeedbackRows
+          );
 
-            if (fbError) {
-              console.error("Feedback query error:", fbError);
-            } else {
-              (fbData || []).forEach((row) => {
-                const mid = row && row.message_id ? String(row.message_id) : "";
-                if (!mid) return;
-                if (!uniqueMessageIds.has(mid)) return;
-                const key = messageIdToConvKey[mid];
-                if (!key) return;
-
-                if (!feedbackAggByKey[key]) {
-                  feedbackAggByKey[key] = { thumbsUpTrue: 0, thumbsUpFalse: 0, hasFeedback: false };
-                }
-
-                if (row.thumbs_up === true) feedbackAggByKey[key].thumbsUpTrue += 1;
-                if (row.thumbs_up === false) feedbackAggByKey[key].thumbsUpFalse += 1;
-
-                if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
-                  feedbackAggByKey[key].hasFeedback = true;
-                }
-
-                if (!messageFeedbackById[mid]) {
-                  messageFeedbackById[mid] = { hasUp: false, hasDown: false, feedback: null, rating: null };
-                }
-                if (row.thumbs_up === true) messageFeedbackById[mid].hasUp = true;
-                if (row.thumbs_up === false) messageFeedbackById[mid].hasDown = true;
-                if (row.feedback !== null && typeof row.feedback === "string" && row.feedback.trim() !== "") {
-                  messageFeedbackById[mid].feedback = row.feedback;
-                  messageFeedbackById[mid].rating = row.rating;
-                }
-              });
-            }
-          }
-
-          // Apply "unread only" filter: missing row OR count mismatch
+          // OR filters: when only feedback checkboxes, requests are already scoped via message_id; combine with AI Flow needs filter
           const unreadOnlyEnabled = unreadOnlyFilter ? unreadOnlyFilter.checked : false;
-          const filteredConversations = unreadOnlyEnabled
-            ? groupedConversations.filter((conv) => {
-                const totalCount = conv.messages ? conv.messages.length : 0;
-                const convId = conv.conversation_id;
-
-                // If there's no conversation_id, treat as not existing in conversations table
-                if (!convId || String(convId).trim() === "") return true;
-
-                const status = statusMap[convId];
-                if (!status || typeof status.last_checked_message_count !== "number") return true;
-                return status.last_checked_message_count !== totalCount;
-              })
-            : groupedConversations;
+          let list = groupedConversations;
+          const orFiltersActive = wantUp || wantDown || wantAgentFlow || wantFb;
+          if (orFiltersActive && (wantAgentFlow || !wantFeedbackOr)) {
+            list = list.filter((conv) => matchesOrFeedbackFilters(conv, feedbackAggByKey));
+          }
+          if (unreadOnlyEnabled) {
+            list = list.filter((conv) => isUnreadConversation(conv, statusMap));
+          }
+          const filteredConversations = list;
 
           // Log results to console
           console.log("Raw search results:", data);
@@ -2165,7 +2457,12 @@
           statusBanner.textContent = `${resultCount} sohbet bulundu.`;
         } catch (error) {
           console.error("Search error:", error);
-          statusBanner.textContent = "Arama sırasında bir hata oluştu.";
+          const detail =
+            (error && (error.message || error.error_description || error.hint)) ||
+            (typeof error === "string" ? error : "");
+          statusBanner.textContent = detail
+            ? "Arama hatası: " + detail
+            : "Arama sırasında bir hata oluştu.";
         } finally {
           searchBtn.disabled = false;
         }
@@ -2176,6 +2473,10 @@
         const conversationId = conversationIdFilter.value.trim();
         const userId = userIdFilter.value.trim();
         const unreadOnly = unreadOnlyFilter ? unreadOnlyFilter.checked : false;
+        const orFu = filterThumbsUpEl && filterThumbsUpEl.checked;
+        const orFd = filterThumbsDownEl && filterThumbsDownEl.checked;
+        const orFlow = filterAgentFlowEl && filterAgentFlowEl.checked;
+        const orFb = filterFeedbackTextEl && filterFeedbackTextEl.checked;
 
         const urlParams = new URLSearchParams();
         if (conversationId) {
@@ -2187,6 +2488,10 @@
         if (unreadOnly) {
           urlParams.set("unread_only", "1");
         }
+        if (orFu) urlParams.set("or_fu", "1");
+        if (orFd) urlParams.set("or_fd", "1");
+        if (orFlow) urlParams.set("or_flow", "1");
+        if (orFb) urlParams.set("or_fb", "1");
 
         const newURL = urlParams.toString()
           ? `${window.location.pathname}?${urlParams.toString()}`

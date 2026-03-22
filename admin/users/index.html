@@ -624,6 +624,79 @@
         background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
       }
+
+      /* Günlük yeni kullanıcılar grafiği (sessions sayfasından taşındı) */
+      .panel-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #111827;
+      }
+
+      .panel-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+
+      .panel-body {
+        padding: 20px 24px 26px;
+      }
+
+      .chart-wrap {
+        position: relative;
+        width: 100%;
+        height: 360px;
+      }
+
+      .chart-wrap.short {
+        height: 320px;
+      }
+
+      .panel-header-right {
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .mini-hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+        font-weight: 600;
+      }
+
+      .chart-legend-hint {
+        margin-top: 12px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-group label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #374151;
+      }
+
+      .filter-group input[type="date"] {
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        min-width: 170px;
+        background: #fff;
+        color: #111827;
+      }
     </style>
   </head>
   <body>
@@ -682,6 +755,35 @@
               <span id="metric-active-day" class="metric-value">–</span>
               <span class="metric-subtitle" id="active-subtitle">Son 24 saatte aktif kullanıcılar</span>
             </article>
+          </section>
+
+          <section class="panel" aria-label="Günlük yeni kullanıcılar grafiği">
+            <div class="panel-header">
+              <div>
+                <h3>Günlük Yeni Kullanıcılar</h3>
+                <div class="panel-subtitle">Her gün için oluşturulan yeni hesap sayısı.</div>
+              </div>
+              <div class="panel-header-right" aria-label="Grafik tarih filtreleri">
+                <div class="filter-group">
+                  <label for="accounts-start-date">Başlangıç</label>
+                  <input id="accounts-start-date" type="date" />
+                </div>
+                <div class="filter-group">
+                  <label for="accounts-end-date">Bitiş</label>
+                  <input id="accounts-end-date" type="date" />
+                </div>
+                <div class="mini-hint">Varsayılan: son 30 gün</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap short">
+                <canvas id="accounts-created-per-day-chart"></canvas>
+              </div>
+              <div class="chart-legend-hint">
+                <div><strong>Y ekseni</strong>: Oluşturulan hesap sayısı</div>
+                <div><strong>X ekseni</strong>: Gün</div>
+              </div>
+            </div>
           </section>
 
           <section class="panel">
@@ -823,6 +925,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
       const SUPABASE_URL = "https://ewxkgalpibbumalylmma.supabase.co";
       const SUPABASE_ANON_KEY =
@@ -851,6 +954,161 @@
       const usersTableBody = document.getElementById("users-table-body");
       const signOutBtn = document.getElementById("sign-out");
       const refreshBtn = document.getElementById("refresh");
+
+      const accountsCreatedPerDayCanvas = document.getElementById("accounts-created-per-day-chart");
+      let accountsCreatedPerDayChart = null;
+      const accountsStartDateInput = document.getElementById("accounts-start-date");
+      const accountsEndDateInput = document.getElementById("accounts-end-date");
+
+      function toRangeIso(dateStr, endOfDay) {
+        if (!dateStr) return null;
+        const d = new Date(`${dateStr}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}`);
+        if (Number.isNaN(d.valueOf())) return null;
+        return d.toISOString();
+      }
+
+      function formatDateInputValue(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function getSelectedAccountsRange() {
+        const startStr = accountsStartDateInput ? accountsStartDateInput.value : "";
+        const endStr = accountsEndDateInput ? accountsEndDateInput.value : "";
+        const startIso = toRangeIso(startStr, false);
+        const endIso = toRangeIso(endStr, true);
+        return { startStr, endStr, startIso, endIso };
+      }
+
+      function ensureAccountsDefaults() {
+        if (!accountsStartDateInput || !accountsEndDateInput) return;
+        if (accountsStartDateInput.value && accountsEndDateInput.value) return;
+        const today = new Date();
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const start = new Date(end);
+        start.setDate(start.getDate() - 29);
+        if (!accountsEndDateInput.value) accountsEndDateInput.value = formatDateInputValue(end);
+        if (!accountsStartDateInput.value) accountsStartDateInput.value = formatDateInputValue(start);
+      }
+
+      async function fetchAllUsersCreatedOn(range) {
+        const pageSize = 1000;
+        let from = 0;
+        let out = [];
+
+        while (true) {
+          let q = supabaseClient
+            .from("users")
+            .select("created_on")
+            .order("created_on", { ascending: true });
+          if (range && range.startIso) q = q.gte("created_on", range.startIso);
+          if (range && range.endIso) q = q.lte("created_on", range.endIso);
+
+          const { data, error } = await q.range(from, from + pageSize - 1);
+
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+
+          out = out.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+
+        return out.map((r) => r.created_on).filter(Boolean);
+      }
+
+      function localDayKey(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+
+      function buildDailyCounts(createdAts) {
+        const countsByDay = new Map();
+        createdAts.forEach((ts) => {
+          const d = new Date(ts);
+          if (Number.isNaN(d.valueOf())) return;
+          const key = localDayKey(d);
+          countsByDay.set(key, (countsByDay.get(key) || 0) + 1);
+        });
+        const labels = Array.from(countsByDay.keys()).sort();
+        const counts = labels.map((k) => countsByDay.get(k) || 0);
+        return { labels, counts };
+      }
+
+      function renderAccountsCreatedPerDayChart(labels, counts) {
+        if (!accountsCreatedPerDayCanvas) return;
+        const ctx = accountsCreatedPerDayCanvas.getContext("2d");
+        if (accountsCreatedPerDayChart) accountsCreatedPerDayChart.destroy();
+
+        const maxCount = counts.reduce((m, v) => (v > m ? v : m), 0);
+        const yMax = maxCount > 0 ? Math.ceil(maxCount * 1.12) : 1;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+        gradient.addColorStop(0, "rgba(249, 115, 22, 0.90)");
+        gradient.addColorStop(1, "rgba(244, 63, 94, 0.70)");
+
+        accountsCreatedPerDayChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Günlük yeni kullanıcı",
+                data: counts,
+                backgroundColor: gradient,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 26,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => labels[items[0].dataIndex],
+                  label: (ctx) => `Oluşturulan: ${counts[ctx.dataIndex]}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0,
+                  autoSkip: true,
+                  maxTicksLimit: 10,
+                  font: { size: 11 },
+                },
+              },
+              y: {
+                beginAtZero: true,
+                max: yMax,
+                grid: { color: "rgba(148, 163, 184, 0.25)" },
+              },
+            },
+          },
+        });
+      }
+
+      async function loadAccountsCreatedPerDay() {
+        ensureAccountsDefaults();
+        const range = getSelectedAccountsRange();
+        if (range.startIso && range.endIso && range.startIso > range.endIso) {
+          statusBanner.textContent =
+            "Hata: (Yeni kullanıcılar) Başlangıç tarihi, bitiş tarihinden sonra olamaz.";
+          return;
+        }
+
+        const createdOns = await fetchAllUsersCreatedOn(range);
+        const { labels, counts } = buildDailyCounts(createdOns);
+        renderAccountsCreatedPerDayChart(labels, counts);
+      }
 
       signOutBtn.addEventListener("click", async () => {
         await supabaseClient.auth.signOut();
@@ -1321,7 +1579,7 @@
             if (!session) return;
           }
 
-          await Promise.all([loadMetrics(), loadUsers()]);
+          await Promise.all([loadMetrics(), loadUsers(), loadAccountsCreatedPerDay()]);
           statusBanner.textContent = "Gösterge paneli güncellendi.";
         } catch (error) {
           console.error("Failed to load admin data:", error);
